@@ -307,8 +307,8 @@
       <widget class="QPushButton" name="btn_confocal_autoZ">
        <property name="geometry">
         <rect>
-         <x>410</x>
-         <y>650</y>
+         <x>490</x>
+         <y>590</y>
          <width>51</width>
          <height>23</height>
         </rect>
@@ -324,7 +324,7 @@
        <property name="geometry">
         <rect>
          <x>480</x>
-         <y>610</y>
+         <y>620</y>
          <width>71</width>
          <height>17</height>
         </rect>
@@ -337,7 +337,7 @@
        <property name="geometry">
         <rect>
          <x>480</x>
-         <y>630</y>
+         <y>640</y>
          <width>71</width>
          <height>17</height>
         </rect>
@@ -350,7 +350,7 @@
        <property name="geometry">
         <rect>
          <x>480</x>
-         <y>650</y>
+         <y>660</y>
          <width>71</width>
          <height>17</height>
         </rect>
@@ -507,7 +507,7 @@
       <widget class="QPushButton" name="btn_confocal_start_roi">
        <property name="geometry">
         <rect>
-         <x>10</x>
+         <x>410</x>
          <y>610</y>
          <width>51</width>
          <height>23</height>
@@ -515,6 +515,19 @@
        </property>
        <property name="text">
         <string>ROI</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="btn_confocal_roi_undo">
+       <property name="geometry">
+        <rect>
+         <x>410</x>
+         <y>650</y>
+         <width>51</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>undo</string>
        </property>
       </widget>
      </widget>
@@ -1611,6 +1624,19 @@
       </property>
       <property name="checkable">
        <bool>true</bool>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="btn_map_start_roi">
+      <property name="geometry">
+       <rect>
+        <x>210</x>
+        <y>20</y>
+        <width>51</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>ROI</string>
       </property>
      </widget>
     </widget>

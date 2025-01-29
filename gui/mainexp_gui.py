@@ -57,7 +57,7 @@ class ViewBoxWithROI(pg.ViewBox):
         if event.button() == QtCore.Qt.MouseButton.LeftButton and self.drawing:
             self.pos = event.scenePos()
             if not self.roi:
-                roi = pg.RectROI(self.mapSceneToView(self.pos), (1, 1), removable=True, invertible=True)
+                roi = pg.RectROI(self.mapSceneToView(self.pos), (1, 1), removable=False, invertible=True, rotatable=False)
                 self.addItem(roi)
                 self.roi = roi
             else:
@@ -522,12 +522,11 @@ class MainExp_GUI(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
         self.confocal_rngz = []
         self.confocal_pl = np.array([])
 
+        self.confocal_settings = []  # for storing previous scans [(xmin, max, ymin, ymax)]
+
         # Create PyQtGraph plots and histogram for confocal scans
         for name in ['confocal', 'map']:
-            if name == 'confocal':
-                setattr(self, 'vb_%s' % name, ViewBoxWithROI())
-            else:
-                setattr(self, 'vb_%s' % name, pg.ViewBox())
+            setattr(self, 'vb_%s' % name, ViewBoxWithROI())
             setattr(self, 'plt_%s' % name, pg.PlotItem(viewBox=getattr(self, 'vb_%s' % name)))
             setattr(self, 'qtimg_%s' % name, pg.ImageItem())
             getattr(self, 'vb_%s' % name).addItem(getattr(self, 'qtimg_%s' % name))
@@ -572,6 +571,7 @@ class MainExp_GUI(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
         self.btn_map_load.clicked.connect(self.map_load)
         self.btn_map_copy.clicked.connect(self.map_copy)
         self.btn_map_select.clicked.connect(self.map_select)
+        self.btn_map_start_roi.clicked.connect(self.map_start_roi)
 
         self.map_data = np.array([])
         self.map_ax_xmin = 0
@@ -1197,6 +1197,9 @@ class MainExp_GUI(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
         if section in ['confocal', 'all']:
             self.btn_confocal_start.setEnabled(bool_set)
             self.btn_confocal_live.setEnabled(bool_set)
+            self.btn_confocal_roi_undo.setEnabled(bool_set)
+            self.btn_confocal_start_roi.setEnabled(bool_set)
+            self.btn_map_start_roi.setEnabled(bool_set)
         if section in ['exp', 'all']:
             self.btn_exp_start.setEnabled(bool_set)
         if section in ['spectrometer', 'all']:
@@ -1529,7 +1532,6 @@ class MainExp_GUI(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
         else:
             self.int_confocal_z_numdivs.setValue(0)
 
-
     def confocal_pxsync(self, b):
         if b:
             self.int_confocal_y_numdivs.setEnabled(False)
@@ -1544,9 +1546,6 @@ class MainExp_GUI(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
         self.dbl_confocal_z_stop.setEnabled(bool(b))
 
     def confocal_start(self):
-        if self.vb_confocal.roi:
-            self.vb_confocal.roi.hide()
-
         if self.btn_map_select.isChecked():
             self.btn_map_select.click()
         if self.task_handler.everything_finished():
@@ -1560,18 +1559,53 @@ class MainExp_GUI(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
                                                    self.int_confocal_y_numdivs.value(),
                                                    self.dbl_confocal_acqtime.value(),
                                                    self.int_confocal_live_avg.value()))
+            self.confocal_settings_store()
             self.thread_confocal.start()
+
+    def confocal_settings_store(self):
+        xmin = self.dbl_confocal_x_start.value()
+        xmax = self.dbl_confocal_x_stop.value()
+        ymin = self.dbl_confocal_y_start.value()
+        ymax = self.dbl_confocal_y_stop.value()
+
+        settings = (xmin, xmax, ymin, ymax)
+
+        if not self.confocal_settings or self.confocal_settings[-1] != settings:
+            self.confocal_settings.append(settings)
+
+    def confocal_set_roi(self, roi):
+        self.confocal_settings_store()
+
+        # get and set new settings from roi (roi is inverted in y-axis)
+        self.dbl_confocal_x_start.setValue(roi.pos().x())
+        self.dbl_confocal_x_stop.setValue(roi.pos().x() + roi.size().x())
+        self.dbl_confocal_y_start.setValue(roi.pos().y() + roi.size().y())
+        self.dbl_confocal_y_stop.setValue(roi.pos().y())
+
+    def confocal_roi_undo(self):
+        if self.confocal_settings:
+            xmin, xmax, ymin, ymax = self.confocal_settings.pop()
+            self.dbl_confocal_x_start.setValue(xmin)
+            self.dbl_confocal_x_stop.setValue(xmax)
+            self.dbl_confocal_y_start.setValue(ymin)
+            self.dbl_confocal_y_stop.setValue(ymax)
 
     def confocal_start_roi(self):
         roi = self.vb_confocal.roi
         if roi and roi.isVisible():
-            self.dbl_confocal_x_start.setValue(roi.pos().x())
-            self.dbl_confocal_x_stop.setValue(roi.pos().x() + roi.size().x())
-            self.dbl_confocal_y_start.setValue(roi.pos().y() + roi.size().y())
-            self.dbl_confocal_y_stop.setValue(roi.pos().y())
+            self.confocal_set_roi(roi)
             self.confocal_start()
         else:
             raise Exception('No ROI Selected')
+
+    def map_start_roi(self):
+        roi = self.vb_map.roi
+        if roi and roi.isVisible():
+            self.confocal_set_roi(roi)
+            self.confocal_start()
+        else:
+            raise Exception('No ROI Selected')
+
     def confocal_live(self, b):
         if b:
             if self.task_handler.everything_finished():
@@ -1676,6 +1710,9 @@ class MainExp_GUI(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
             self.map_updateplot()
 
     def map_copy(self):
+        if self.vb_map.roi:
+            self.vb_map.roi.hide()
+
         self.map_ax_xmin = self.dbl_confocal_x_start.value()
         self.map_ax_xmax = self.dbl_confocal_x_stop.value()
         self.map_ax_ymin = self.dbl_confocal_y_start.value()

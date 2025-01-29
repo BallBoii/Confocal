@@ -120,6 +120,10 @@ class Confocal(ExpThread.ExpThread):
         self.mainexp.set_gui_input_enable('confocal', False)
         self.mainexp.btn_confocal_stop.setEnabled(True)
         self.mainexp.chkbx_confocal_autolevel.setChecked(True)
+
+        if self.mainexp.vb_confocal.roi:
+            self.mainexp.vb_confocal.roi.hide()
+
         if self.isLive:
             self.mainexp.btn_confocal_live.setEnabled(True)
 
