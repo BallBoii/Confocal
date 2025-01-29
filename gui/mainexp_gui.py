@@ -70,14 +70,16 @@ class ViewBoxWithROI(pg.ViewBox):
             super().mousePressEvent(event)
 
     def roiMenu(self):
-        # roiMenu = self.menu.addMenu("ROI")
-        group = QtGui.QActionGroup(self)
-        rect = QtGui.QAction(u'Draw ROI', group)
-        rect.triggered.connect(self.drawRect)
-        self.menu.addActions(group.actions())
+        rect = QtGui.QAction(u'Draw ROI', self)
+        rect.setCheckable(True)
+        rect.toggled.connect(self.drawRect)
+        self.menu.addAction(rect)
 
-    def drawRect(self, action):
-        self.drawing = True
+    def drawRect(self, b):
+        if b:
+            self.drawing = True
+        else:
+            self.roi.hide()
 
     @staticmethod
     def _adjustValue(x):
@@ -502,6 +504,7 @@ class MainExp_GUI(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
         self.btn_confocal_mode.buttonClicked.connect(self.confocal_mode_select)
         self.btn_confocal_start.clicked.connect(self.confocal_start)
         self.btn_confocal_start_roi.clicked.connect(self.confocal_start_roi)
+        self.btn_confocal_roi_undo.clicked.connect(self.confocal_roi_undo)
         self.btn_confocal_live.toggled.connect(self.confocal_live)
         self.int_confocal_live_avg.valueChanged.connect(self.confocal_live_set_avg)
         self.btn_confocal_stop.clicked.connect(self.confocal_stop)
