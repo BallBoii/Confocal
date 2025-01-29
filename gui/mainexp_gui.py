@@ -446,6 +446,7 @@ class MainExp_GUI(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
         self.int_confocal_live_avg.valueChanged.connect(self.confocal_live_set_avg)
         self.btn_confocal_stop.clicked.connect(self.confocal_stop)
         self.btn_confocal_save.clicked.connect(functools.partial(self.thread_confocal.save, ext=True))
+        self.btn_confocal_pxsync.clicked.connect(self.confocal_pxsync)
         self.chkbx_confocal_autolevel.setChecked(True)
         self.chkbx_confocal_autolevel.stateChanged.connect(self.confocal_set_autolevel)
 
@@ -1176,7 +1177,8 @@ class MainExp_GUI(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
             self.int_confocal_x_numdivs.setEnabled(bool_set)
             self.dbl_confocal_y_start.setEnabled(bool_set)
             self.dbl_confocal_y_stop.setEnabled(bool_set)
-            self.int_confocal_y_numdivs.setEnabled(bool_set)
+            self.btn_confocal_pxsync.setEnabled(bool_set)
+            self.int_confocal_y_numdivs.setEnabled(bool_set and not self.btn_confocal_pxsync.isChecked())
             self.dbl_confocal_z_start.setEnabled(bool_set)
             self.dbl_confocal_z_stop.setEnabled(bool_set)
             self.int_confocal_z_numdivs.setEnabled(bool_set)
@@ -1463,6 +1465,16 @@ class MainExp_GUI(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
                 self.int_confocal_z_numdivs.setValue(100)
         else:
             self.int_confocal_z_numdivs.setValue(0)
+
+
+    def confocal_pxsync(self, b):
+        if b:
+            self.int_confocal_y_numdivs.setEnabled(False)
+            self.int_confocal_y_numdivs.setValue(self.int_confocal_x_numdivs.value())
+            self.int_confocal_x_numdivs.valueChanged.connect(self.int_confocal_y_numdivs.setValue)
+        else:
+            self.int_confocal_x_numdivs.valueChanged.disconnect()
+            self.int_confocal_y_numdivs.setEnabled(True)
 
     def confocal_zstack_enable(self, b):
         self.dbl_confocal_z_start.setEnabled(bool(b))
