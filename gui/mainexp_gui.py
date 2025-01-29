@@ -1565,13 +1565,15 @@ class MainExp_GUI(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
             self.confocal_settings_store()
             self.thread_confocal.start()
 
-    def confocal_settings_store(self):
+    def confocal_get_settings(self):
         xmin = self.dbl_confocal_x_start.value()
         xmax = self.dbl_confocal_x_stop.value()
         ymin = self.dbl_confocal_y_start.value()
         ymax = self.dbl_confocal_y_stop.value()
 
-        settings = (xmin, xmax, ymin, ymax)
+        return (xmin, xmax, ymin, ymax)
+    def confocal_settings_store(self):
+        settings = self.confocal_get_settings()
 
         if not self.confocal_settings or self.confocal_settings[-1] != settings:
             self.confocal_settings.append(settings)
@@ -1587,11 +1589,16 @@ class MainExp_GUI(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
 
     def confocal_roi_undo(self):
         if self.confocal_settings:
-            xmin, xmax, ymin, ymax = self.confocal_settings.pop()
-            self.dbl_confocal_x_start.setValue(xmin)
-            self.dbl_confocal_x_stop.setValue(xmax)
-            self.dbl_confocal_y_start.setValue(ymin)
-            self.dbl_confocal_y_stop.setValue(ymax)
+            settings_old = self.confocal_settings.pop()
+
+            # Try to pop another one if this is the previously saved roi
+            if settings_old == self.confocal_get_settings() and self.confocal_settings:
+                settings_old = self.confocal_settings.pop()
+
+            self.dbl_confocal_x_start.setValue(settings_old[0])
+            self.dbl_confocal_x_stop.setValue(settings_old[1])
+            self.dbl_confocal_y_start.setValue(settings_old[2])
+            self.dbl_confocal_y_stop.setValue(settings_old[3])
 
     def confocal_start_roi(self):
         roi = self.vb_confocal.roi
