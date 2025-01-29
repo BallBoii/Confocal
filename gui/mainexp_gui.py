@@ -26,6 +26,65 @@ def my_excepthook(type, value, tback):
 sys.excepthook = my_excepthook
 
 
+class ViewBoxWithROI(pg.ViewBox):
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.drawing = False
+        self.roi = None
+        self.pos = None
+
+        self.roiMenu()
+
+    def mouseMoveEvent(self, event):
+        if self.drawing:
+            delta = self.mapSceneToView(self.pos) - self.mapSceneToView(event.scenePos())
+            self.roi.setSize([self._adjustValue(- delta.x()), self._adjustValue(- delta.y())])
+            self.update()
+            event.accept()
+        else:
+            super().mouseMoveEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        if self.drawing:
+            self.pos = None
+            self.drawing = False
+            event.accept()
+        else:
+            super().mouseReleaseEvent(event)
+
+    def mousePressEvent(self, event):
+        if event.button() == QtCore.Qt.MouseButton.LeftButton and self.drawing:
+            self.pos = event.scenePos()
+            if not self.roi:
+                roi = pg.RectROI(self.mapSceneToView(self.pos), (1, 1), removable=True, invertible=True)
+                self.addItem(roi)
+                self.roi = roi
+            else:
+                self.roi.show()
+                self.roi.setPos(self.mapSceneToView(self.pos))
+                self.roi.setSize((1, 1))
+            self.update()
+            event.accept()
+        else:
+            super().mousePressEvent(event)
+
+    def roiMenu(self):
+        # roiMenu = self.menu.addMenu("ROI")
+        group = QtGui.QActionGroup(self)
+        rect = QtGui.QAction(u'Draw ROI', group)
+        rect.triggered.connect(self.drawRect)
+        self.menu.addActions(group.actions())
+
+    def drawRect(self, action):
+        self.drawing = True
+
+    @staticmethod
+    def _adjustValue(x):
+        if -1 < x < 1:
+            return -1 if x < 0 else 1
+        return x
+
 class MainExp_GUI(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
     def __init__(self, galvo2=False):
         # constructor from QMainWindow parent class
@@ -442,6 +501,7 @@ class MainExp_GUI(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
         self.btn_confocal_mode.addButton(self.btn_confocal_mode_yz, 2)
         self.btn_confocal_mode.buttonClicked.connect(self.confocal_mode_select)
         self.btn_confocal_start.clicked.connect(self.confocal_start)
+        self.btn_confocal_start_roi.clicked.connect(self.confocal_start_roi)
         self.btn_confocal_live.toggled.connect(self.confocal_live)
         self.int_confocal_live_avg.valueChanged.connect(self.confocal_live_set_avg)
         self.btn_confocal_stop.clicked.connect(self.confocal_stop)
@@ -464,7 +524,10 @@ class MainExp_GUI(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
 
         # Create PyQtGraph plots and histogram for confocal scans
         for name in ['confocal', 'map']:
-            setattr(self, 'vb_%s' % name, pg.ViewBox())
+            if name == 'confocal':
+                setattr(self, 'vb_%s' % name, ViewBoxWithROI())
+            else:
+                setattr(self, 'vb_%s' % name, pg.ViewBox())
             setattr(self, 'plt_%s' % name, pg.PlotItem(viewBox=getattr(self, 'vb_%s' % name)))
             setattr(self, 'qtimg_%s' % name, pg.ImageItem())
             getattr(self, 'vb_%s' % name).addItem(getattr(self, 'qtimg_%s' % name))
@@ -1481,6 +1544,9 @@ class MainExp_GUI(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
         self.dbl_confocal_z_stop.setEnabled(bool(b))
 
     def confocal_start(self):
+        if self.vb_confocal.roi:
+            self.vb_confocal.roi.hide()
+
         if self.btn_map_select.isChecked():
             self.btn_map_select.click()
         if self.task_handler.everything_finished():
@@ -1496,6 +1562,16 @@ class MainExp_GUI(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
                                                    self.int_confocal_live_avg.value()))
             self.thread_confocal.start()
 
+    def confocal_start_roi(self):
+        roi = self.vb_confocal.roi
+        if roi and roi.isVisible():
+            self.dbl_confocal_x_start.setValue(roi.pos().x())
+            self.dbl_confocal_x_stop.setValue(roi.pos().x() + roi.size().x())
+            self.dbl_confocal_y_start.setValue(roi.pos().y() + roi.size().y())
+            self.dbl_confocal_y_stop.setValue(roi.pos().y())
+            self.confocal_start()
+        else:
+            raise Exception('No ROI Selected')
     def confocal_live(self, b):
         if b:
             if self.task_handler.everything_finished():

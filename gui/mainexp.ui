@@ -504,6 +504,19 @@
         <bool>true</bool>
        </property>
       </widget>
+      <widget class="QPushButton" name="btn_confocal_start_roi">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>610</y>
+         <width>51</width>
+         <height>23</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>ROI</string>
+       </property>
+      </widget>
      </widget>
      <widget class="QWidget" name="tab_exp">
       <attribute name="title">
