@@ -1,10 +1,12 @@
 from PyQt6.QtCore import pyqtSignal
-import PyDAQmx, time, datetime
+import time, datetime
 import numpy as np
 import warnings
 
 from . import ExpThread
 
+import nidaqmx
+from nidaqmx.constants import AcquisitionType, READ_ALL_AVAILABLE
 
 class Confocal(ExpThread.ExpThread):
     '''MODIFIED TO USE ANALOG SIGNAL FROM PHOTODIODE INSTEAD'''
@@ -16,13 +18,6 @@ class Confocal(ExpThread.ExpThread):
 
     def __init__(self, mainexp, wait_condition):
         super().__init__(mainexp, wait_condition)
-
-        # Make references to the main DAQmx Channels
-        self.galpie = mainexp.galpie
-        self.ai0 = mainexp.ai0
-        self.ctrapd = mainexp.ctrapd
-        self.ctrclk = mainexp.ctrclk
-        self.ctrtrig = mainexp.ctrtrig
 
         self.acqtime = 0.001
 
@@ -49,69 +44,6 @@ class Confocal(ExpThread.ExpThread):
 
         self.plane_coef = [0, 0, 1, 5]  # coefficients for Ax + By + Cz = D for autoZ
 
-    def setup_ctr(self):
-        self.ctrapd.reset()
-        self.ctrclk.reset()
-        self.ctrtrig.set_time(0.001)
-        self.ctrtrig.reset()
-        self.galpie.reset()
-        # self.ai0.reset()
-
-        self.galpie.set_sample_clock(self.mainexp.inst_params['instruments']['ctrclk']['addr_out'],
-                                     PyDAQmx.DAQmx_Val_Rising,
-                                     len(self.var1) + 1)
-        self.galpie.set_start_trigger(self.mainexp.inst_params['instruments']['ctrtrig']['addr_out'],
-                                      PyDAQmx.DAQmx_Val_Rising)
-
-        # self.ai0.set_sample_clock(self.mainexp.inst_params['instruments']['ctrclk']['addr_out'],
-        #                              PyDAQmx.DAQmx_Val_Rising,
-        #                              len(self.var1) + 1)
-        #
-        # self.ai0.set_start_trigger(self.mainexp.inst_params['instruments']['ctrtrig']['addr_out'],
-        #                               PyDAQmx.DAQmx_Val_Rising)
-        # create a self.ctrapd running on clock from self.ctrclk and wait for trigger from self.ctrtrig
-        self.ctrapd.set_sample_clock(self.mainexp.inst_params['instruments']['ctrclk']['addr_out'],
-                                     PyDAQmx.DAQmx_Val_Rising,
-                                     len(self.var1) + 1)
-        self.ctrapd.set_arm_start_trigger(self.mainexp.inst_params['instruments']['ctrtrig']['addr_out'],
-                                          PyDAQmx.DAQmx_Val_Rising)
-
-        # creates a clock using pulses on self.ctrclk (output to PFI7)
-        self.ctrclk.set_freq(1/self.acqtime)
-        self.ctrclk.start()
-
-    def setup_ctr_2d(self):
-        self.ctrapd.reset()
-        self.ctrclk.reset()
-        self.ctrtrig.set_time(0.001)
-        self.ctrtrig.reset()
-        self.galpie.reset()
-        # self.ai0.reset()
-
-        self.galpie.set_sample_clock(self.mainexp.inst_params['instruments']['ctrclk']['addr_out'],
-                                     PyDAQmx.DAQmx_Val_Rising,
-                                     len(self.var1)*len(self.var2) + 1)
-        self.galpie.set_start_trigger(self.mainexp.inst_params['instruments']['ctrtrig']['addr_out'],
-                                      PyDAQmx.DAQmx_Val_Rising)
-
-        # self.ai0.set_sample_clock(self.mainexp.inst_params['instruments']['ctrclk']['addr_out'],
-        #                              PyDAQmx.DAQmx_Val_Rising,
-        #                              len(self.var1)*len(self.var2) + 1)
-        #
-        # self.ai0.set_start_trigger(self.mainexp.inst_params['instruments']['ctrtrig']['addr_out'],
-        #                               PyDAQmx.DAQmx_Val_Rising)
-
-        # create a self.ctrapd running on clock from self.ctrclk and wait for trigger from self.ctrtrig
-        self.ctrapd.set_sample_clock(self.mainexp.inst_params['instruments']['ctrclk']['addr_out'],
-                                     PyDAQmx.DAQmx_Val_Rising,
-                                     len(self.var1)*len(self.var2) + 1)
-        self.ctrapd.set_arm_start_trigger(self.mainexp.inst_params['instruments']['ctrtrig']['addr_out'],
-                                          PyDAQmx.DAQmx_Val_Rising)
-
-        # creates a clock using pulses on self.ctrclk (output to PFI7)
-        self.ctrclk.set_freq(1/self.acqtime)
-        self.ctrclk.start()
-
     def prep_mainexp(self):
         self.mainexp.datasaved = False
 
@@ -128,9 +60,7 @@ class Confocal(ExpThread.ExpThread):
             self.mainexp.btn_confocal_live.setEnabled(True)
 
     def update(self):
-        self.autoZ = self.mainexp.btn_confocal_autoZ.isChecked()
         self.mode = self.mainexp.btn_confocal_mode.checkedId()
-        self.isESR = self.mainexp.chkbx_confocal_esr.isChecked()
         self.confocal_live_avg = self.mainexp.int_confocal_live_avg.value()
 
     def prepsweep(self):
@@ -197,126 +127,10 @@ class Confocal(ExpThread.ExpThread):
         if self.isRunning():
             self.wait_for_mainexp()
 
-        self.log_clear()
-        self.log('%s started at %s' % (self.mainexp.label_filename.text(),
-                                                            datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
-
-    def sweep1d(self, x_i, x_f, y_i, y_f, z_i, z_f, numpnts):
-        xstart = x_i
-        xstop = x_f
-        acqtime = self.acqtime
-
-        # create a list of positions
-        xlist = np.linspace(xstart, xstop, numpnts)
-        # repeat the last point to park and read counts
-        xlist = np.append(xlist, xlist[-1])
-        ylist = np.linspace(y_i, y_f, len(xlist))
-        zlist = np.linspace(z_i, z_f, len(xlist))
-
-        self.galpie.set_positions([self.var1_id, self.var2_id, self.var3_id],
-                                  [xlist.tolist(), ylist.tolist(), zlist.tolist()])
-        # set arm start on the tasks that are hardware-timed so they are ready to be triggered
-        self.galpie.start()
-        # self.ai0.start()
-        self.ctrapd.start()
-
-        self.ctrtrig.start()
-        self.ctrtrig.wait_until_done()
-        self.ctrtrig.stop()
-
-        # readarray = self.ai0.get_voltages(numpnts + 1)
-        # ctr_read = readarray[1:]
-
-        ctr_raw = self.ctrapd.get_counts(numpnts + 1)
-        ctr_read = np.diff(ctr_raw) / acqtime
-
-        self.galpie.wait_until_done()
-        # self.ai0.wait_until_done()
-        self.ctrapd.wait_until_done()
-        self.galpie.stop()
-        # self.ai0.stop()
-        self.ctrapd.stop()
-
-        return list(ctr_read)
-
-    def sweep2d(self):
-        # Not doing stacks, not using any Z piezo. Not running MW. For now....
-        if len(self.var3) == 1 and not self.autoZ and self.mode == 0 and not self.isESR:
-            self.galpie.reset()
-            self.galpie.set_position(self.var3_id, self.var3[0])
-            self.sweep2d_fast()
-        else:
-            # Define the indices separately, otherwise they will cause problems when passed into the signal
-            index_z = 0
-            autoZ = self.autoZ
-
-            # conventional 2d scan in multiple z-slices
-
-            for z in self.var3:
-                if not self.cancel:
-                    index_y = 0
-
-                    self.galpie.reset()
-                    self.galpie.set_position(self.var3_id, z)
-                    self.setup_ctr()
-                    time.sleep(0.5)
-
-                    xvect = list(self.var1)
-                    for y in self.var2:
-                        if not self.cancel:
-                            x_i = xvect[0]
-                            x_f = xvect[-1]
-                            y_i = y
-                            y_f = y
-
-                            if not autoZ:
-                                z_i = z
-                                z_f = z
-                            else:
-                                z_i = self.calcZ(x_i, y)
-                                z_f = self.calcZ(x_f, y)
-
-                            # return the linecut containing counts per second
-                            if not self.isESR:
-                                xlinecut = self.sweep1d(x_i, x_f, y_i, y_f, z_i, z_f, len(xvect))
-                            else:
-                                self.mainexp.mw1.set_output(0)
-                                self.mainexp.pb.set_cw()
-                                time.sleep(0.1)
-                                xlinecut_1 = np.array(self.sweep1d(x_i, x_f, y_i, y_f, z_i, z_f, len(xvect)))
-                                self.mainexp.mw1.set_output(1)
-                                self.mainexp.pb.set_cw_custom(['green', 'mw1'])
-                                time.sleep(0.1)
-                                xlinecut_2 = np.array(self.sweep1d(x_i, x_f, y_i, y_f, z_i, z_f, len(xvect)))
-                                xlinecut = list(xlinecut_1 - xlinecut_2)
-
-                            if np.mod(index_y, 2) == 1:
-                                xlinecut.reverse()
-
-                            for i in range(len(xlinecut)):
-                                self.mainexp.confocal_pl[i][index_y][index_z] = xlinecut[i]
-
-                            # if np.mod(index_y + 1, 10) == 0 or y == self.var2[-1]:
-                            self.signal_confocal_updateplot.emit(index_z)
-                            xvect.reverse()
-
-                            index_y += 1
-
-                    if self.isRunning():
-                        self.wait_for_mainexp()
-
-                    index_z += 1
-
-            self.ctrclk.stop()
-
-            if self.isESR:
-                self.mainexp.mw1.set_output(0)
-                self.mainexp.pb.set_cw()
-
-    def sweep2d_fast(self):
+    def sweep(self):
         rev = False
-
         exit_loop = False
+
         while not exit_loop:
             if len(self.confocal_live_stacks):
                 self.confocal_live_stacks = np.append(self.confocal_live_stacks,
@@ -327,7 +141,7 @@ class Confocal(ExpThread.ExpThread):
             if self.confocal_live_stacks.shape[2] > self.confocal_live_avg:
                 self.confocal_live_stacks = self.confocal_live_stacks[:, :, -self.confocal_live_avg:]
 
-            self.sweep2d_fast_single_frame(rev=rev)
+            self.sweep_single_frame(rev=rev)
             rev = ~rev
 
             if self.cancel:
@@ -339,107 +153,97 @@ class Confocal(ExpThread.ExpThread):
                     exit_loop = not self.mainexp.btn_confocal_live.isChecked() and \
                                 np.atleast_3d(self.confocal_live_stacks).shape[2] == self.confocal_live_avg
 
-    def sweep2d_fast_single_frame(self, rev=False):
+    def sweep_single_frame(self, rev=False):
+        # todo: change address / change yaml structure
+        galpie = self.mainexp.inst_params['instruments']['galpie']
+        aoX, aoY = galpie['addr']['aoX'], galpie['addr']['aoY']
+        scaleX, scaleY = eval(galpie['set_scale']['volt_per_micron'][0]), eval(galpie['set_scale']['volt_per_micron'][1])
+        offsetX, offsetY = galpie['set_scale']['offset'][0], galpie['set_scale']['offset'][1]
+
+        ctrapd = self.mainexp.inst_params['instruments']['ctrapd']
+        ci = ctrapd['addr']['dev']
+        ci_src = ctrapd['addr_src']
+
+        rate = 1/self.acqtime
+
         if not self.cancel:
-            self.setup_ctr_2d()
+            with (nidaqmx.Task('Galvo') as ao_task, nidaqmx.Task('Counter') as ci_task):
 
-            # Build a sweep list
-            xlist = np.array([])
-            ylist = np.array([])
-            zlist = np.array([])
+                ao_task.ao_channels.add_ao_voltage_chan(f'{aoX},{aoY}')
+                ao_task.timing.cfg_samp_clk_timing(rate, source='', samps_per_chan=len(self.var1)*len(self.var2) + 1)
 
-            for i, y in enumerate(self.var2):
-                if not i % 2:
-                    xlist = np.append(xlist, self.var1)
-                else:
-                    xlist = np.append(xlist, np.flip(self.var1, axis=0))
+                ci_task.ci_channels.add_ci_count_edges_chan(f'{ci}')
+                ci_task.timing.cfg_samp_clk_timing(rate, source='ao/SampleClock', samps_per_chan=len(self.var1)*len(self.var2) + 1)
+                ci_task.triggers.arm_start_trigger.dig_edge_src = 'ao/StartTrigger'
+                ci_task.ci_channels[0].ci_count_edges_term = ci_src
 
-                ylist = np.append(ylist, np.ones(len(self.var1)) * y)
-                zlist = np.append(zlist, np.ones(len(self.var1)) * self.var3[0])
+                # Build a sweep list
+                xlist = np.array([])
+                ylist = np.array([])
+                # zlist = np.array([])
 
-            if rev:
-                xlist = np.flip(xlist, axis=0)
-                ylist = np.flip(ylist, axis=0)
-                zlist = np.flip(zlist, axis=0)
-
-            xlist = np.append(xlist, xlist[-1])
-            ylist = np.append(ylist, ylist[-1])
-            zlist = np.append(zlist, zlist[-1])
-
-            self.galpie.set_positions([self.var1_id, self.var2_id, self.var3_id],
-                                      [xlist.tolist(), ylist.tolist(), zlist.tolist()])
-
-            # set arm start on the tasks that are hardware-timed so they are ready to be triggered
-            self.galpie.start()
-            # self.ai0.start()
-            self.ctrapd.start()
-            self.ctrtrig.start()
-            self.ctrtrig.wait_until_done()
-            self.ctrtrig.stop()
-
-            self.mainexp.seqapd_pl = np.array([])
-
-            numpnts1 = len(self.var1)
-            numpnts2 = len(self.var2)
-
-            # self.ai0.get_voltages(1)[0]
-            last_counter = self.mainexp.ctrapd.get_counts(1)[0]
-
-            for index_y in range(numpnts2):
-                if not self.cancel:
-                    # This will wait until the entire row is read
-                    # ctr_diff = self.ai0.get_voltages(numpnts1)
-
-                    ctr_raw = self.mainexp.ctrapd.get_counts(numpnts1)
-                    ctr_diff = np.diff(np.append([last_counter], ctr_raw)) / self.acqtime
-
-                    last_counter = ctr_raw[-1]
-
-                    # Forward meander scan (increasing yvals)
-                    if not rev:
-                        if not index_y % 2:
-                            self.confocal_live_stacks[:, index_y, -1] = ctr_diff
-                        else:
-                            self.confocal_live_stacks[:, index_y, -1] = np.flipud(ctr_diff)
-                        self.mainexp.confocal_pl[:, index_y, 0] = np.nanmean(self.confocal_live_stacks[:, index_y, :], axis=1)
-                    # Reverse meander scan (decreasing yvals)
+                for i, y in enumerate(self.var2):
+                    if not i % 2:
+                        xlist = np.append(xlist, self.var1)
                     else:
-                        if not index_y % 2:
-                            self.confocal_live_stacks[:, -(index_y+1), -1] = np.flipud(ctr_diff)
+                        xlist = np.append(xlist, np.flip(self.var1, axis=0))
+
+                    ylist = np.append(ylist, np.ones(len(self.var1)) * y)
+                    # zlist = np.append(zlist, np.ones(len(self.var1)) * self.var3[0])
+
+                if rev:
+                    xlist = np.flip(xlist, axis=0)
+                    ylist = np.flip(ylist, axis=0)
+                    # zlist = np.flip(zlist, axis=0)
+
+                print(xlist, scaleX, offsetX)
+                xlist = np.append(xlist, xlist[-1]) * scaleX + offsetX
+                ylist = np.append(ylist, ylist[-1]) * scaleY + offsetY
+
+                # zlist = np.append(zlist, zlist[-1])
+
+                ci_task.start()
+                ao_task.write(np.vstack((xlist,ylist)), auto_start=True)
+
+                self.mainexp.seqapd_pl = np.array([])
+
+                numpnts1 = len(self.var1)
+                numpnts2 = len(self.var2)
+
+                last_counter = ci_task.read(1)
+
+                for index_y in range(numpnts2):
+                    if not self.cancel:
+                        # This will wait until the entire row is read
+
+                        ctr_raw = ci_task.read(numpnts1)
+                        ctr_diff = np.diff(np.append([last_counter], ctr_raw)) / self.acqtime
+
+                        last_counter = ctr_raw[-1]
+
+                        # Forward meander scan (increasing yvals)
+                        if not rev:
+                            if not index_y % 2:
+                                self.confocal_live_stacks[:, index_y, -1] = ctr_diff
+                            else:
+                                self.confocal_live_stacks[:, index_y, -1] = np.flipud(ctr_diff)
+                            self.mainexp.confocal_pl[:, index_y, 0] = np.nanmean(
+                                self.confocal_live_stacks[:, index_y, :], axis=1)
+                        # Reverse meander scan (decreasing yvals)
                         else:
-                            self.confocal_live_stacks[:, -(index_y+1), -1] = ctr_diff
-                        self.mainexp.confocal_pl[:, -(index_y+1), 0] = np.nanmean(self.confocal_live_stacks[:, -(index_y+1), :], axis=1)
+                            if not index_y % 2:
+                                self.confocal_live_stacks[:, -(index_y + 1), -1] = np.flipud(ctr_diff)
+                            else:
+                                self.confocal_live_stacks[:, -(index_y + 1), -1] = ctr_diff
+                            self.mainexp.confocal_pl[:, -(index_y + 1), 0] = np.nanmean(
+                                self.confocal_live_stacks[:, -(index_y + 1), :], axis=1)
 
-                    self.signal_confocal_updateplot.emit(0)
+                        self.signal_confocal_updateplot.emit(0)
 
-            if hasattr(PyDAQmx.DAQmxFunctions, 'DAQWarning'):
-                with warnings.catch_warnings():
-                    warnings.simplefilter('ignore', PyDAQmx.DAQmxFunctions.DAQWarning)  # for ignoring warnings when plotting NaNs
-
-                    self.mainexp.ctrclk.stop()
-                    self.mainexp.ctrclk.reset()
-                    try:
-                        # self.ai0.stop()
-                        self.mainexp.ctrapd.stop()
-                    except PyDAQmx.DAQmxFunctions.DAQError:
-                        # It is normal for the PyDAQmx to throw an error when stopped prematurely
-                        pass
-                    # self.ai0.reset()
-
-            if self.isRunning():
-                self.wait_for_mainexp()
+                if self.isRunning():
+                    self.wait_for_mainexp()
 
     def cleanup(self):
-        self.log('%s finished at %s' % (self.mainexp.label_filename.text(),
-                                                             datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
-
-        # stop nidaq tasks if they haven't already
-        self.mainexp.galpie.reset()
-        # self.mainexp.ai0.reset()
-        self.mainexp.ctrapd.reset()
-        self.mainexp.ctrclk.reset()
-        self.mainexp.ctrtrig.reset()
-
         if self.mainexp.chkbx_autosave.isChecked() and not self.mainexp.datasaved:
             self.save()
             self.mainexp.datasaved = True
@@ -509,7 +313,8 @@ class Confocal(ExpThread.ExpThread):
         self.prepsweep()
         self.initplots()
 
-        self.sweep2d()
+        self.sweep()
+
         self.cleanup()
         self.isLive = False
 

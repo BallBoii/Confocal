@@ -87,6 +87,12 @@ class ViewBoxWithROI(pg.ViewBox):
             return -1 if x < 0 else 1
         return x
 
+
+# Define yellow-hot colormap
+colors = np.array([[0, 0, 0], [255, 0, 0], [255, 255, 0]])
+cm = pg.ColorMap([0, 0.5, 1], colors)
+
+
 class MainWindow(QtWidgets.QMainWindow):
 
     def __init__(self, *args, **kwargs):
@@ -99,6 +105,484 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
         self.setFixedSize(self.size())
+
+        # this will ensure that the application quits at the right time,
+        # and that Qt has a chance to automatically delete all the children of the top-level window
+        # before the python garbage-collector gets to work.
+        # http://stackoverflow.com/questions/27131294/error-qobjectstarttimer-qtimer-can-only-be-used-with-threads-started-with-qt
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose)
+
+        self.mutex = QtCore.QMutex()
+        self.wait_confocal = QtCore.QWaitCondition()
+
+        '''INSTRUMENT INITIALIZATION'''
+        instpath = os.path.expanduser(os.path.join('~', 'Documents', 'exp_config', 'inst_params.yaml'))
+        if os.path.isfile(instpath):
+            self.inst_params = file_utils.yaml2dict(instpath)
+        else:
+            print('inst_params.yaml not found!')
+
+        '''WORKER THREADS INITIALIZATION'''
+        self.thread_confocal = exp.Confocal.Confocal(self, self.wait_confocal)
+
+        '''CONFOCAL'''
+        self.btn_confocal_mode_xy.setChecked(True)
+        self.btn_confocal_mode = QtWidgets.QButtonGroup()
+        self.btn_confocal_mode.addButton(self.btn_confocal_mode_xy, 0)
+        self.btn_confocal_mode.addButton(self.btn_confocal_mode_yx, 1)
+        self.btn_confocal_mode.buttonClicked.connect(self.confocal_mode_select)
+        self.btn_confocal_start.clicked.connect(self.confocal_start)
+        self.btn_confocal_start_roi.clicked.connect(self.confocal_start_roi)
+        self.btn_confocal_roi_undo.clicked.connect(self.confocal_roi_undo)
+        self.btn_confocal_live.toggled.connect(self.confocal_live)
+        self.int_confocal_live_avg.valueChanged.connect(self.confocal_live_set_avg)
+        self.btn_confocal_stop.clicked.connect(self.confocal_stop)
+        self.btn_confocal_save.clicked.connect(functools.partial(self.thread_confocal.save, ext=True))
+        self.btn_confocal_pxsync.clicked.connect(self.confocal_pxsync)
+        self.chkbx_confocal_autolevel.setChecked(True)
+        self.chkbx_confocal_autolevel.stateChanged.connect(self.confocal_set_autolevel)
+
+        self.confocal_mode = 0
+        self.confocal_rngx = []
+        self.confocal_rngy = []
+        self.confocal_rngz = []
+        self.confocal_pl = np.array([])
+
+        self.confocal_settings = []  # for storing previous scans [(xmin, max, ymin, ymax)]
+
+        # Create PyQtGraph plots and histogram for confocal scans
+        for name in ['confocal', 'map']:
+            setattr(self, 'vb_%s' % name, ViewBoxWithROI())
+            setattr(self, 'plt_%s' % name, pg.PlotItem(viewBox=getattr(self, 'vb_%s' % name)))
+            setattr(self, 'qtimg_%s' % name, pg.ImageItem())
+            getattr(self, 'vb_%s' % name).addItem(getattr(self, 'qtimg_%s' % name))
+
+        '''CONFOCAL PLOTS'''
+        self.glw_confocal = pg.GraphicsLayoutWidget()
+        self.glw_confocal.addItem(self.plt_confocal, 0, 0)
+        self.hlw_confocal = mainexp_widgets.CustomLUTWidget(image=self.qtimg_confocal)
+        self.hlw_confocal.gradient.setColorMap(cm)
+
+        self.grid_confocal.addWidget(self.glw_confocal, 0, 0)
+        self.grid_confocal.addWidget(self.hlw_confocal, 0, 1)
+
+        self.int_confocal_z_numdivs.valueChanged.connect(self.confocal_zstack_enable)
+        self.confocal_zstack_enable(self.int_confocal_z_numdivs.value())
+
+        '''MAP PLOTS'''
+        self.glw_map = pg.GraphicsLayoutWidget()
+        self.glw_map.addItem(self.plt_map, 0, 0)
+        self.hlw_map = mainexp_widgets.CustomLUTWidget(image=self.qtimg_map)
+        self.hlw_map.gradient.setColorMap(cm)
+
+        self.grid_map.addWidget(self.glw_map, 0, 0)
+        self.grid_map.addWidget(self.hlw_map, 0, 1)
+
+        self.map_vLine = pg.InfiniteLine(angle=90, movable=False, pen=(0, 150, 100))
+        self.map_hLine = pg.InfiniteLine(angle=0, movable=False, pen=(0, 150, 100))
+        self.map_vLine.hide()
+        self.map_hLine.hide()
+
+        self.map_cursor = pg.ScatterPlotItem(pen=pg.mkPen('w', width=2), brush=None, symbol='o', size=7)
+        self.map_cursor.setData([0], [0])
+        self.map_nvlist = pg.ScatterPlotItem(pen=pg.mkPen((0, 150, 100), width=2), brush=None, symbol='o', size=7)
+        self.map_nvlist.setData([], [])
+        self.map_nvlabels = [] # for storing NV numbers
+
+        self.plt_map.addItem(self.map_nvlist)
+        self.plt_map.addItem(self.map_cursor)
+        self.plt_map.addItem(self.map_vLine, ignoreBounds=True)
+        self.plt_map.addItem(self.map_hLine, ignoreBounds=True)
+
+        self.btn_map_load.clicked.connect(self.map_load)
+        self.btn_map_copy.clicked.connect(self.map_copy)
+        self.btn_map_select.clicked.connect(self.map_select)
+        self.btn_map_start_roi.clicked.connect(self.map_start_roi)
+
+        self.map_data = np.array([])
+        self.map_ax_xmin = 0
+        self.map_ax_xmax = 0
+        self.map_ax_ymin = 0
+        self.map_ax_ymax = 0
+
+        '''SET UP ALL GUI'''
+        # Set up ranges and step limits in the gui fields
+        if os.path.isfile(os.path.expanduser(os.path.join('~', 'Documents', 'exp_config', 'guifield_settings.yaml'))):
+            gfspath = os.path.expanduser(os.path.join('~', 'Documents', 'exp_config', 'guifield_settings.yaml'))
+        else:
+            gfspath = 'guifield_settings.yaml'
+
+        if os.path.isfile(gfspath):
+            gfs = file_utils.yaml2dict(gfspath)
+            self.esrguisettings = gfs.pop('esr', None) # return the esr key or None
+            for field in gfs.keys():
+                try:
+                    target = getattr(self, field)
+                    for setting in gfs[field].keys():
+                        if type(gfs[field][setting]) is list:
+                            getattr(target, setting)(*gfs[field][setting])
+                        else:
+                            getattr(target, setting)(gfs[field][setting])
+                except AttributeError:
+                    print('Field %s does not exist.' % field)
+            print('loading guifield_settings.yaml')
+
+        processEvents()
+
+        # Load previous GUI settings
+        if os.path.isfile(os.path.expanduser(os.path.join('~', 'Documents', 'exp_config', 'guisettings.config'))):
+            print('loading guisettings.config')
+            gui_settings = file_utils.load_config(os.path.expanduser(os.path.join('~', 'Documents', 'exp_config', 'guisettings.config')))
+            self.import_gui_settings(gui_settings)
+        elif os.path.isfile(os.path.join(os.getcwd(), 'guisettings.config')):
+            warnings.warn('loading guisettings.config from exp_code. this may be bogus')
+            gui_settings = file_utils.load_config(os.path.join(os.getcwd(), 'guisettings.config'))
+            self.import_gui_settings(gui_settings)
+
+        '''MISCELLANEOUS'''
+        self.wavenum = file_utils.getwavenum() + 1
+
+        self.pixmap_confocal_graph = None
+        self.pixmap_confocal_fig = None
+
+    def confocal_mode_select(self, btn_id):
+        isX = False; isY = False; isZ = False
+        if btn_id == 0:
+            isX = True
+            isY = True
+        if btn_id == 1:
+            isX = True
+            isZ = True
+        if btn_id == 2:
+            isY = True
+            isZ = True
+
+        if isX:
+            if self.int_confocal_x_numdivs.value() == 0:
+                self.int_confocal_x_numdivs.setValue(100)
+        else:
+            self.int_confocal_x_numdivs.setValue(0)
+        if isY:
+            if self.int_confocal_y_numdivs.value() == 0:
+                self.int_confocal_y_numdivs.setValue(100)
+        else:
+            self.int_confocal_y_numdivs.setValue(0)
+        if isZ:
+            if self.int_confocal_z_numdivs.value() == 0:
+                self.int_confocal_z_numdivs.setValue(100)
+        else:
+            self.int_confocal_z_numdivs.setValue(0)
+
+    def confocal_pxsync(self, b):
+        if b:
+            self.int_confocal_y_numdivs.setEnabled(False)
+            self.int_confocal_y_numdivs.setValue(self.int_confocal_x_numdivs.value())
+            self.int_confocal_x_numdivs.valueChanged.connect(self.int_confocal_y_numdivs.setValue)
+        else:
+            self.int_confocal_x_numdivs.valueChanged.disconnect()
+            self.int_confocal_y_numdivs.setEnabled(True)
+
+    def confocal_zstack_enable(self, b):
+        self.dbl_confocal_z_start.setEnabled(bool(b))
+        self.dbl_confocal_z_stop.setEnabled(bool(b))
+
+    def confocal_start(self):
+        if self.btn_map_select.isChecked():
+            self.btn_map_select.setChecked(False)
+
+        self.confocal_settings_store()
+        self.thread_confocal.start()
+
+    def confocal_get_settings(self):
+        xmin = self.dbl_confocal_x_start.value()
+        xmax = self.dbl_confocal_x_stop.value()
+        ymin = self.dbl_confocal_y_start.value()
+        ymax = self.dbl_confocal_y_stop.value()
+
+        return (xmin, xmax, ymin, ymax)
+    def confocal_settings_store(self):
+        settings = self.confocal_get_settings()
+
+        if not self.confocal_settings or self.confocal_settings[-1] != settings:
+            self.confocal_settings.append(settings)
+
+    def confocal_set_roi(self, roi):
+        self.confocal_settings_store()
+
+        # get and set new settings from roi (roi is inverted in y-axis)
+        self.dbl_confocal_x_start.setValue(roi.pos().x())
+        self.dbl_confocal_x_stop.setValue(roi.pos().x() + roi.size().x())
+        self.dbl_confocal_y_start.setValue(roi.pos().y() + roi.size().y())
+        self.dbl_confocal_y_stop.setValue(roi.pos().y())
+
+    def confocal_roi_undo(self):
+        if self.confocal_settings:
+            settings_old = self.confocal_settings.pop()
+
+            # Try to pop another one if this is the previously saved roi
+            if settings_old == self.confocal_get_settings() and self.confocal_settings:
+                settings_old = self.confocal_settings.pop()
+
+            self.dbl_confocal_x_start.setValue(settings_old[0])
+            self.dbl_confocal_x_stop.setValue(settings_old[1])
+            self.dbl_confocal_y_start.setValue(settings_old[2])
+            self.dbl_confocal_y_stop.setValue(settings_old[3])
+
+    def confocal_start_roi(self):
+        roi = self.vb_confocal.roi
+        if roi and roi.isVisible():
+            self.confocal_set_roi(roi)
+            self.confocal_start()
+        else:
+            raise Exception('No ROI Selected')
+
+    def map_start_roi(self):
+        roi = self.vb_map.roi
+        if roi and roi.isVisible():
+            self.confocal_set_roi(roi)
+            self.confocal_start()
+        else:
+            raise Exception('No ROI Selected')
+
+    def confocal_live(self, b):
+        if b:
+            if self.task_handler.everything_finished():
+                self.thread_confocal.isLive = True
+                self.thread_confocal.start()
+
+    def confocal_live_set_avg(self, v):
+        self.thread_confocal.confocal_live_avg = v
+
+    def confocal_stop(self):
+        self.thread_confocal.cancel = True
+
+    def confocal_initplot(self):
+        start_x = self.confocal_rngx[0]
+        stop_x = self.confocal_rngx[-1]
+        start_y = self.confocal_rngy[0]
+        stop_y = self.confocal_rngy[-1]
+
+        self.qtimg_confocal.setImage(self.confocal_pl[:, :, 0])
+        # self.hlw_confocal.setImageItem(self.qtimg_confocal)
+
+        for name in ['confocal']:
+            qtimg = getattr(self, 'qtimg_%s' % name)
+            qtimg.resetTransform()  # need to call this. otherwise pos and scale are relative to previous
+            qtimg.setRect(start_x, start_y, (stop_x - start_x), (stop_y - start_y))
+
+        if self.confocal_mode == 0:
+            self.plt_confocal.setLabels(bottom='xpos (&mu;m)', left='ypos (&mu;m)')
+        if self.confocal_mode == 1:
+            self.plt_confocal.setLabels(bottom='xpos (&mu;m)', left='zpos (&mu;m)')
+        if self.confocal_mode == 2:
+            self.plt_confocal.setLabels(bottom='ypos (&mu;m)', left='zpos (&mu;m)')
+
+        processEvents()
+
+    def confocal_updateplot(self, zindex=0):
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', RuntimeWarning)  # for ignoring warnings when plotting NaNs
+
+            self.qtimg_confocal.setImage(self.confocal_pl[:, :, zindex])
+            # self.hlw_confocal.setImageItem(self.qtimg_confocal)
+
+            if self.confocal_mode == 0:
+                filename = 'PLxposypos_%d' % self.wavenum
+
+                self.plt_confocal.setTitle('%s: Z = %.2f' % (filename, self.confocal_rngz[zindex]))
+                self.label_filename.setText(filename)
+
+    def confocal_set_autolevel(self, b):
+        self.hlw_confocal.item.autoLevel = bool(b)
+
+    def confocal_grab_screenshots(self):
+        self.pixmap_confocal_graph = self.frame_main.grab()
+        self.pixmap_confocal_fig = self.frame_main.grab()
+        processEvents()
+
+    def map_load(self):
+        documents_path = os.path.expanduser(os.path.join('~', 'Documents', 'data_mat'))
+        fd = QtWidgets.QFileDialog(directory=documents_path)
+        targetfile = fd.getOpenFileName(filter='mat files (*.mat)')
+
+        targetfile = targetfile[0]
+        if targetfile != '':
+            matfile = scipy.io.loadmat(targetfile)
+
+            xvals = matfile['xvals'][0]
+            yvals = matfile['yvals'][0]
+            pl = np.squeeze(matfile['pl'])
+
+            self.map_ax_xmin = xvals[0]
+            self.map_ax_xmax = xvals[-1]
+            self.map_ax_ymin = yvals[0]
+            self.map_ax_ymax = yvals[-1]
+
+            self.map_data = pl
+
+            self.linein_map.setText(targetfile.split('/')[-1].split('.mat')[0])
+            self.map_updateplot()
+
+    def map_copy(self):
+        if self.vb_map.roi:
+            self.vb_map.roi.hide()
+
+        self.map_ax_xmin = self.dbl_confocal_x_start.value()
+        self.map_ax_xmax = self.dbl_confocal_x_stop.value()
+        self.map_ax_ymin = self.dbl_confocal_y_start.value()
+        self.map_ax_ymax = self.dbl_confocal_y_stop.value()
+
+        self.map_data = self.confocal_pl[:, :, 0]
+
+        self.linein_map.setText(self.label_filename.text())
+        self.map_updateplot()
+
+    def map_select(self, checked):
+        if checked:  # enable cursor
+            self.map_connect(self.map_clicked_drive)
+        else:  # disable cursor here
+            self.map_disconnect()
+
+    def map_updateplot(self):
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', RuntimeWarning)  # for ignoring warnings when plotting NaNs
+
+            if len(self.map_data) > 0:
+                self.qtimg_map.setImage(self.map_data)
+                self.qtimg_map.resetTransform()
+                self.qtimg_map.setRect(self.map_ax_xmin, self.map_ax_ymin, (self.map_ax_xmax - self.map_ax_xmin), (self.map_ax_ymax - self.map_ax_ymin))
+
+                # self.hlw_map.setImageItem(self.qtimg_map)
+
+                processEvents()
+
+    def map_mouseMoved(self, pos):
+        if self.plt_map.sceneBoundingRect().contains(pos):
+            mousePoint = self.vb_map.mapSceneToView(pos)
+            self.map_vLine.setPos(mousePoint.x())
+            self.map_hLine.setPos(mousePoint.y())
+
+    def map_updatecursor(self):
+        self.map_cursor.setData([self.dbl_tracker_xpos.value()], [self.dbl_tracker_ypos.value()])
+        processEvents()
+
+    def map_clicked_drive(self, event):
+        if self.map_clicked_pos(event):
+            self.tracker_drive()
+
+    def map_clicked_pos(self, event):
+        pos = event.scenePos()
+        if self.plt_map.sceneBoundingRect().contains(pos) and event.button() == QtCore.Qt.MouseButton.LeftButton:
+            mousePoint = self.vb_map.mapSceneToView(pos)
+            self.dbl_tracker_xpos.setValue(mousePoint.x())
+            self.dbl_tracker_ypos.setValue(mousePoint.y())
+            self.dbl_tracker_zpos.setValue(self.dbl_tracker_zpos.value())
+            return True
+        else:
+            return False
+
+    def map_connect(self, clicked_func):
+        self.map_vLine.show()
+        self.map_hLine.show()
+        self.plt_map.scene().sigMouseMoved.connect(self.map_mouseMoved)
+        self.plt_map.scene().sigMouseClicked.connect(clicked_func)
+
+    def map_disconnect(self):
+        self.map_vLine.hide()
+        self.map_hLine.hide()
+        try:
+            self.plt_map.scene().sigMouseMoved.disconnect()
+        except TypeError:
+            pass
+        try:
+            self.plt_map.scene().sigMouseClicked.disconnect()
+        except TypeError:
+            pass
+
+    def import_gui_settings(self, data):
+        # refill the linein, double, and integer fields in the gui
+        for attr in self.__dict__.keys():
+            if 'linein' in attr:
+                if attr in data['linein'].keys():
+                    getattr(self, attr).setText(data['linein'][attr])
+            if 'dbl_' in attr:
+                if attr in data['dbl'].keys():
+                    getattr(self, attr).setValue(data['dbl'][attr])
+            if 'int_' in attr:
+                if attr in data['int'].keys():
+                    getattr(self, attr).setValue(data['int'][attr])
+            if 'map_ax' in attr:
+                if attr in data['map_ax'].keys():
+                    setattr(self, attr, data['map_ax'][attr])
+
+        try:
+            self.map_data = data['map']
+            self.map_updateplot()
+        except KeyError:
+            print('no confocal map loaded')
+            pass
+
+    def export_gui_settings(self):
+        outdata = {'linein': {}, 'dbl': {}, 'int': {}, 'img': [], 'map': [], 'map_ax': {}}
+        if len(self.confocal_pl) > 0:
+            outdata['img'] = self.confocal_pl[:, :, 0]
+        if len(self.map_data) > 0:
+            outdata['map'] = self.map_data
+        for attr in self.__dict__.keys():
+            if 'linein' in attr:
+                outdata['linein'][attr] = getattr(self, attr).text()
+            elif 'dbl_' in attr:
+                outdata['dbl'][attr] = getattr(self, attr).value()
+            elif 'int_' in attr:
+                outdata['int'][attr] = getattr(self, attr).value()
+            elif 'map_ax_' in attr:
+                outdata['map_ax'][attr] = getattr(self, attr)
+
+        outdata['cmdlog'] = self.label_terminal_cmdlog.toPlainText()
+
+        file_utils.save_config(outdata, path=os.path.expanduser(os.path.join('~', 'Documents', 'exp_config')))
+
+        self.export_sweep_settings(os.path.expanduser(os.path.join('~', 'Documents', 'exp_config',
+                                                                   'sweep_params','manual.yaml')),
+                                   manual=True)
+        file_utils.table2csv(self.table_nvlist, os.path.expanduser(os.path.join('~', 'Documents', 'exp_config',
+                                                                                'table_nvlist.csv')))
+
+
+    def set_gui_defaults(self):
+        pass # todo
+
+    def set_gui_btn_enable(self, section, bool_set):
+        if section in ['confocal', 'all']:
+            self.btn_confocal_start.setEnabled(bool_set)
+            self.btn_confocal_live.setEnabled(bool_set)
+            self.btn_confocal_roi_undo.setEnabled(bool_set)
+            self.btn_confocal_start_roi.setEnabled(bool_set)
+            self.btn_map_start_roi.setEnabled(bool_set)
+
+    def set_gui_input_enable(self, section, bool_set):
+        if section in ['confocal', 'all']:
+            self.dbl_confocal_x_start.setEnabled(bool_set)
+            self.dbl_confocal_x_stop.setEnabled(bool_set)
+            self.int_confocal_x_numdivs.setEnabled(bool_set)
+            self.dbl_confocal_y_start.setEnabled(bool_set)
+            self.dbl_confocal_y_stop.setEnabled(bool_set)
+            self.btn_confocal_pxsync.setEnabled(bool_set)
+            self.int_confocal_y_numdivs.setEnabled(bool_set and not self.btn_confocal_pxsync.isChecked())
+            self.dbl_confocal_z_start.setEnabled(bool_set)
+            self.dbl_confocal_z_stop.setEnabled(bool_set)
+            self.int_confocal_z_numdivs.setEnabled(bool_set)
+            self.dbl_confocal_acqtime.setEnabled(bool_set)
+            self.confocal_zstack_enable(bool(self.int_confocal_z_numdivs.value()) and bool_set)
+
+    def log(self, text):
+        print(text) # todo
+
+    def log_clear(self):
+        pass
+
+def processEvents():
+    QtWidgets.QApplication.processEvents()
 
 
 def main():

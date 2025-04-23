@@ -14,17 +14,6 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QWidget" name="gridLayoutWidget">
-    <property name="geometry">
-     <rect>
-      <x>90</x>
-      <y>80</y>
-      <width>771</width>
-      <height>571</height>
-     </rect>
-    </property>
-    <layout class="QGridLayout" name="grid_confocal"/>
-   </widget>
    <widget class="QDoubleSpinBox" name="dbl_confocal_z_stop">
     <property name="geometry">
      <rect>
@@ -616,6 +605,137 @@
     </property>
     <property name="text">
      <string>clear</string>
+    </property>
+   </widget>
+   <widget class="QFrame" name="frame_main">
+    <property name="geometry">
+     <rect>
+      <x>70</x>
+      <y>80</y>
+      <width>771</width>
+      <height>571</height>
+     </rect>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::StyledPanel</enum>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Raised</enum>
+    </property>
+    <widget class="QWidget" name="gridLayoutWidget">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>0</y>
+       <width>771</width>
+       <height>571</height>
+      </rect>
+     </property>
+     <layout class="QGridLayout" name="grid_confocal"/>
+    </widget>
+   </widget>
+   <widget class="QLabel" name="label_filename">
+    <property name="geometry">
+     <rect>
+      <x>90</x>
+      <y>800</y>
+      <width>131</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>filename_00</string>
+    </property>
+   </widget>
+   <widget class="QDoubleSpinBox" name="dbl_tracker_ypos">
+    <property name="geometry">
+     <rect>
+      <x>1410</x>
+      <y>50</y>
+      <width>60</width>
+      <height>23</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QDoubleSpinBox" name="dbl_tracker_xpos">
+    <property name="geometry">
+     <rect>
+      <x>1350</x>
+      <y>50</y>
+      <width>60</width>
+      <height>23</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_tracker_y">
+    <property name="geometry">
+     <rect>
+      <x>1410</x>
+      <y>32</y>
+      <width>47</width>
+      <height>13</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>y</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QDoubleSpinBox" name="dbl_tracker_zpos">
+    <property name="geometry">
+     <rect>
+      <x>1470</x>
+      <y>50</y>
+      <width>60</width>
+      <height>23</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_tracker_z">
+    <property name="geometry">
+     <rect>
+      <x>1470</x>
+      <y>32</y>
+      <width>47</width>
+      <height>13</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>z</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_tracker_x">
+    <property name="geometry">
+     <rect>
+      <x>1350</x>
+      <y>32</y>
+      <width>47</width>
+      <height>13</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>x</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btn_tracker_home">
+    <property name="geometry">
+     <rect>
+      <x>1530</x>
+      <y>50</y>
+      <width>51</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Home</string>
     </property>
    </widget>
   </widget>

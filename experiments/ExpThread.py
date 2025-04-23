@@ -37,19 +37,7 @@ class ExpThread(QThread):
         else:
             raise ValueError('filename is not compatible with the format dataname_#')
 
-        # Default Sweep Params for the experiment
-        if sweep_params is None:
-            sweep_params = dict((k, v) for k, v in self.mainexp.exp_params.items())
-
-            # Add laser power if it is defined
-            if hasattr(self.mainexp, 'pm100d'):
-                p532 = self.mainexp.pm100d.get_pow() * 1e3
-                if 'readout_params' in sweep_params.keys():
-                    sweep_params['readout_params']['p532'] = p532
-                else:
-                    sweep_params['readout_params'] = {'p532': p532}
-
-        file_utils.save_data(filename, data_dict, graph=graph, fig=fig, sweep_params=sweep_params)
+        file_utils.save_data(filename, data_dict, graph=graph, fig=fig)
 
         # Increment wavenum if it has not been incremented already
         if self.mainexp.wavenum < wavenum:
