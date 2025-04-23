@@ -127,9 +127,6 @@ class Confocal(ExpThread.ExpThread):
         if self.isLive:
             self.mainexp.btn_confocal_live.setEnabled(True)
 
-        if self.mainexp.btn_confocal_autoZ.isChecked():
-            self.plane_fit()
-
     def update(self):
         self.autoZ = self.mainexp.btn_confocal_autoZ.isChecked()
         self.mode = self.mainexp.btn_confocal_mode.checkedId()

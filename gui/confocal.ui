@@ -1,0 +1,643 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1619</width>
+    <height>928</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <widget class="QWidget" name="gridLayoutWidget">
+    <property name="geometry">
+     <rect>
+      <x>90</x>
+      <y>80</y>
+      <width>771</width>
+      <height>571</height>
+     </rect>
+    </property>
+    <layout class="QGridLayout" name="grid_confocal"/>
+   </widget>
+   <widget class="QDoubleSpinBox" name="dbl_confocal_z_stop">
+    <property name="geometry">
+     <rect>
+      <x>440</x>
+      <y>710</y>
+      <width>51</width>
+      <height>22</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QRadioButton" name="btn_confocal_mode_yx">
+    <property name="geometry">
+     <rect>
+      <x>560</x>
+      <y>720</y>
+      <width>71</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>XZ Scan</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_confocal_start">
+    <property name="geometry">
+     <rect>
+      <x>260</x>
+      <y>690</y>
+      <width>47</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>start</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btn_confocal_stop">
+    <property name="geometry">
+     <rect>
+      <x>150</x>
+      <y>670</y>
+      <width>51</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Stop</string>
+    </property>
+   </widget>
+   <widget class="QDoubleSpinBox" name="dbl_confocal_acqtime">
+    <property name="geometry">
+     <rect>
+      <x>90</x>
+      <y>730</y>
+      <width>62</width>
+      <height>22</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QSpinBox" name="int_confocal_z_numdivs">
+    <property name="geometry">
+     <rect>
+      <x>440</x>
+      <y>730</y>
+      <width>51</width>
+      <height>22</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QSpinBox" name="int_confocal_live_avg">
+    <property name="geometry">
+     <rect>
+      <x>160</x>
+      <y>730</y>
+      <width>51</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="keyboardTracking">
+     <bool>false</bool>
+    </property>
+   </widget>
+   <widget class="QDoubleSpinBox" name="dbl_confocal_y_stop">
+    <property name="geometry">
+     <rect>
+      <x>380</x>
+      <y>710</y>
+      <width>51</width>
+      <height>22</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btn_confocal_start">
+    <property name="geometry">
+     <rect>
+      <x>90</x>
+      <y>670</y>
+      <width>51</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Start</string>
+    </property>
+   </widget>
+   <widget class="QDoubleSpinBox" name="dbl_confocal_z_start">
+    <property name="geometry">
+     <rect>
+      <x>440</x>
+      <y>690</y>
+      <width>51</width>
+      <height>22</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_confocal_acqtime">
+    <property name="geometry">
+     <rect>
+      <x>90</x>
+      <y>710</y>
+      <width>71</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Acq. Time (s)</string>
+    </property>
+   </widget>
+   <widget class="QSpinBox" name="int_confocal_y_numdivs">
+    <property name="geometry">
+     <rect>
+      <x>380</x>
+      <y>730</y>
+      <width>51</width>
+      <height>22</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QDoubleSpinBox" name="dbl_confocal_y_start">
+    <property name="geometry">
+     <rect>
+      <x>380</x>
+      <y>690</y>
+      <width>51</width>
+      <height>22</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_confocal_numdivs">
+    <property name="geometry">
+     <rect>
+      <x>260</x>
+      <y>730</y>
+      <width>47</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string># step</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btn_confocal_live">
+    <property name="geometry">
+     <rect>
+      <x>210</x>
+      <y>730</y>
+      <width>51</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>LIVE</string>
+    </property>
+    <property name="checkable">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btn_confocal_save">
+    <property name="geometry">
+     <rect>
+      <x>210</x>
+      <y>670</y>
+      <width>51</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Save</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_confocal_z">
+    <property name="geometry">
+     <rect>
+      <x>440</x>
+      <y>670</y>
+      <width>47</width>
+      <height>13</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>z</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btn_confocal_start_roi">
+    <property name="geometry">
+     <rect>
+      <x>490</x>
+      <y>690</y>
+      <width>51</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>ROI</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_confocal_x">
+    <property name="geometry">
+     <rect>
+      <x>310</x>
+      <y>670</y>
+      <width>47</width>
+      <height>13</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>x</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QDoubleSpinBox" name="dbl_confocal_x_stop">
+    <property name="geometry">
+     <rect>
+      <x>310</x>
+      <y>710</y>
+      <width>51</width>
+      <height>22</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="chkbx_confocal_autolevel">
+    <property name="geometry">
+     <rect>
+      <x>770</x>
+      <y>660</y>
+      <width>91</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="layoutDirection">
+     <enum>Qt::RightToLeft</enum>
+    </property>
+    <property name="text">
+     <string>auto level</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_confocal_live_avg">
+    <property name="geometry">
+     <rect>
+      <x>160</x>
+      <y>710</y>
+      <width>31</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string># avg</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QSpinBox" name="int_confocal_x_numdivs">
+    <property name="geometry">
+     <rect>
+      <x>310</x>
+      <y>730</y>
+      <width>51</width>
+      <height>22</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QRadioButton" name="btn_confocal_mode_xy">
+    <property name="geometry">
+     <rect>
+      <x>560</x>
+      <y>700</y>
+      <width>71</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>XY Scan</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btn_confocal_roi_undo">
+    <property name="geometry">
+     <rect>
+      <x>490</x>
+      <y>730</y>
+      <width>51</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>undo</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="linein_sample_name">
+    <property name="geometry">
+     <rect>
+      <x>160</x>
+      <y>39</y>
+      <width>181</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="placeholderText">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="chkbx_autosave">
+    <property name="geometry">
+     <rect>
+      <x>90</x>
+      <y>770</y>
+      <width>81</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Auto Save</string>
+    </property>
+   </widget>
+   <widget class="QDoubleSpinBox" name="dbl_confocal_x_start">
+    <property name="geometry">
+     <rect>
+      <x>310</x>
+      <y>690</y>
+      <width>51</width>
+      <height>22</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_confocal_stop">
+    <property name="geometry">
+     <rect>
+      <x>260</x>
+      <y>710</y>
+      <width>47</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>stop</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_confocal_y">
+    <property name="geometry">
+     <rect>
+      <x>380</x>
+      <y>670</y>
+      <width>47</width>
+      <height>13</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>y</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_sample_name">
+    <property name="geometry">
+     <rect>
+      <x>90</x>
+      <y>50</y>
+      <width>47</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Sample:</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btn_map_copy">
+    <property name="geometry">
+     <rect>
+      <x>1240</x>
+      <y>50</y>
+      <width>51</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Copy</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btn_map_start_roi">
+    <property name="geometry">
+     <rect>
+      <x>1090</x>
+      <y>50</y>
+      <width>51</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>ROI</string>
+    </property>
+   </widget>
+   <widget class="QWidget" name="gridLayoutWidget_5">
+    <property name="geometry">
+     <rect>
+      <x>890</x>
+      <y>80</y>
+      <width>691</width>
+      <height>571</height>
+     </rect>
+    </property>
+    <layout class="QGridLayout" name="grid_map"/>
+   </widget>
+   <widget class="QPushButton" name="btn_map_select">
+    <property name="geometry">
+     <rect>
+      <x>1290</x>
+      <y>50</y>
+      <width>51</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Select</string>
+    </property>
+    <property name="checkable">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QLabel" name="linein_map">
+    <property name="geometry">
+     <rect>
+      <x>890</x>
+      <y>50</y>
+      <width>181</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>linein_map</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btn_map_load">
+    <property name="geometry">
+     <rect>
+      <x>1190</x>
+      <y>50</y>
+      <width>51</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Load</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btn_confocal_pxsync">
+    <property name="geometry">
+     <rect>
+      <x>360</x>
+      <y>730</y>
+      <width>16</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>8</string>
+    </property>
+    <property name="checkable">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QDoubleSpinBox" name="dbl_confocal_preset_1">
+    <property name="geometry">
+     <rect>
+      <x>310</x>
+      <y>770</y>
+      <width>51</width>
+      <height>22</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QDoubleSpinBox" name="dbl_confocal_preset_2">
+    <property name="geometry">
+     <rect>
+      <x>310</x>
+      <y>800</y>
+      <width>51</width>
+      <height>22</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btn_liveapd_stop">
+    <property name="geometry">
+     <rect>
+      <x>1100</x>
+      <y>830</y>
+      <width>41</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>stop</string>
+    </property>
+   </widget>
+   <widget class="QDoubleSpinBox" name="dbl_liveapd_acqtime">
+    <property name="geometry">
+     <rect>
+      <x>990</x>
+      <y>830</y>
+      <width>71</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="keyboardTracking">
+     <bool>false</bool>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btn_liveapd_start">
+    <property name="geometry">
+     <rect>
+      <x>1060</x>
+      <y>830</y>
+      <width>41</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>start</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_liveapd_acqtime">
+    <property name="geometry">
+     <rect>
+      <x>890</x>
+      <y>830</y>
+      <width>91</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Acquisition Time (s)</string>
+    </property>
+   </widget>
+   <widget class="GraphicsLayoutWidget" name="glw_liveapd">
+    <property name="geometry">
+     <rect>
+      <x>890</x>
+      <y>670</y>
+      <width>691</width>
+      <height>151</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btn_liveapd_clear">
+    <property name="geometry">
+     <rect>
+      <x>1140</x>
+      <y>830</y>
+      <width>41</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>clear</string>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1619</width>
+     <height>26</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>GraphicsLayoutWidget</class>
+   <extends>QGraphicsView</extends>
+   <header>pyqtgraph.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>
