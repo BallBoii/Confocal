@@ -156,6 +156,7 @@ class MainWindow(QtWidgets.QMainWindow):
             setattr(self, 'plt_%s' % name, pg.PlotItem(viewBox=getattr(self, 'vb_%s' % name)))
             setattr(self, 'qtimg_%s' % name, pg.ImageItem())
             getattr(self, 'vb_%s' % name).addItem(getattr(self, 'qtimg_%s' % name))
+            getattr(self, 'plt_%s' % name).setLabels(bottom='xpos (&mu;m)', left='ypos (&mu;m)')
 
         '''CONFOCAL PLOTS'''
         self.glw_confocal = pg.GraphicsLayoutWidget()
@@ -363,7 +364,6 @@ class MainWindow(QtWidgets.QMainWindow):
         stop_y = self.confocal_rngy[-1]
 
         self.qtimg_confocal.setImage(self.confocal_pl[:, :, 0])
-        # self.hlw_confocal.setImageItem(self.qtimg_confocal)
 
         for name in ['confocal']:
             qtimg = getattr(self, 'qtimg_%s' % name)

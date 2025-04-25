@@ -17,7 +17,7 @@
    <widget class="QDoubleSpinBox" name="dbl_confocal_z_stop">
     <property name="geometry">
      <rect>
-      <x>440</x>
+      <x>490</x>
       <y>710</y>
       <width>51</width>
       <height>22</height>
@@ -27,14 +27,14 @@
    <widget class="QRadioButton" name="btn_confocal_mode_yx">
     <property name="geometry">
      <rect>
-      <x>560</x>
+      <x>610</x>
       <y>720</y>
       <width>71</width>
       <height>17</height>
      </rect>
     </property>
     <property name="text">
-     <string>XZ Scan</string>
+     <string>YX Scan</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_confocal_start">
@@ -79,7 +79,7 @@
    <widget class="QSpinBox" name="int_confocal_z_numdivs">
     <property name="geometry">
      <rect>
-      <x>440</x>
+      <x>490</x>
       <y>730</y>
       <width>51</width>
       <height>22</height>
@@ -102,7 +102,7 @@
    <widget class="QDoubleSpinBox" name="dbl_confocal_y_stop">
     <property name="geometry">
      <rect>
-      <x>380</x>
+      <x>420</x>
       <y>710</y>
       <width>51</width>
       <height>22</height>
@@ -125,7 +125,7 @@
    <widget class="QDoubleSpinBox" name="dbl_confocal_z_start">
     <property name="geometry">
      <rect>
-      <x>440</x>
+      <x>490</x>
       <y>690</y>
       <width>51</width>
       <height>22</height>
@@ -148,7 +148,7 @@
    <widget class="QSpinBox" name="int_confocal_y_numdivs">
     <property name="geometry">
      <rect>
-      <x>380</x>
+      <x>420</x>
       <y>730</y>
       <width>51</width>
       <height>22</height>
@@ -158,7 +158,7 @@
    <widget class="QDoubleSpinBox" name="dbl_confocal_y_start">
     <property name="geometry">
      <rect>
-      <x>380</x>
+      <x>420</x>
       <y>690</y>
       <width>51</width>
       <height>22</height>
@@ -213,7 +213,7 @@
    <widget class="QLabel" name="label_confocal_z">
     <property name="geometry">
      <rect>
-      <x>440</x>
+      <x>490</x>
       <y>670</y>
       <width>47</width>
       <height>13</height>
@@ -229,7 +229,7 @@
    <widget class="QPushButton" name="btn_confocal_start_roi">
     <property name="geometry">
      <rect>
-      <x>490</x>
+      <x>540</x>
       <y>690</y>
       <width>51</width>
       <height>23</height>
@@ -310,7 +310,7 @@
    <widget class="QRadioButton" name="btn_confocal_mode_xy">
     <property name="geometry">
      <rect>
-      <x>560</x>
+      <x>610</x>
       <y>700</y>
       <width>71</width>
       <height>17</height>
@@ -323,7 +323,7 @@
    <widget class="QPushButton" name="btn_confocal_roi_undo">
     <property name="geometry">
      <rect>
-      <x>490</x>
+      <x>540</x>
       <y>730</y>
       <width>51</width>
       <height>21</height>
@@ -391,7 +391,7 @@
    <widget class="QLabel" name="label_confocal_y">
     <property name="geometry">
      <rect>
-      <x>380</x>
+      <x>410</x>
       <y>670</y>
       <width>47</width>
       <height>13</height>
@@ -499,14 +499,14 @@
    <widget class="QPushButton" name="btn_confocal_pxsync">
     <property name="geometry">
      <rect>
-      <x>360</x>
+      <x>390</x>
       <y>730</y>
-      <width>16</width>
+      <width>21</width>
       <height>23</height>
      </rect>
     </property>
     <property name="text">
-     <string>8</string>
+     <string>∞</string>
     </property>
     <property name="checkable">
      <bool>true</bool>
