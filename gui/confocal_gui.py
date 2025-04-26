@@ -1,90 +1,22 @@
 from PyQt6 import QtGui, QtCore, QtWidgets, uic
 
 # system imports
-import sys, os, struct, scipy.io, warnings, functools, time, datetime
+import sys, os, scipy.io, warnings, functools
 import pyqtgraph as pg
-import pdb
 import numpy as np
-import csv
 
 # user-defined imports
 import file_utils
 import experiments as exp
 
 # import UI files
-import mainexp as mainwindow
 import mainexp_widgets
 
-import qdarkstyle
 
 def my_excepthook(type, value, tback):
     sys.__excepthook__(type, value, tback)
 
-
 sys.excepthook = my_excepthook
-
-
-class ViewBoxWithROI(pg.ViewBox):
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.drawing = False
-        self.roi = None
-        self.pos = None
-
-        self.roiMenu()
-
-    def mouseMoveEvent(self, event):
-        if self.drawing:
-            delta = self.mapSceneToView(self.pos) - self.mapSceneToView(event.scenePos())
-            self.roi.setSize([self._adjustValue(- delta.x()), self._adjustValue(- delta.y())])
-            self.update()
-            event.accept()
-        else:
-            super().mouseMoveEvent(event)
-
-    def mouseReleaseEvent(self, event):
-        if self.drawing:
-            self.pos = None
-            self.drawing = False
-            event.accept()
-        else:
-            super().mouseReleaseEvent(event)
-
-    def mousePressEvent(self, event):
-        if event.button() == QtCore.Qt.MouseButton.LeftButton and self.drawing:
-            self.pos = event.scenePos()
-            if not self.roi:
-                roi = pg.RectROI(self.mapSceneToView(self.pos), (1, 1), removable=False, invertible=True, rotatable=False)
-                self.addItem(roi)
-                self.roi = roi
-            else:
-                self.roi.show()
-                self.roi.setPos(self.mapSceneToView(self.pos))
-                self.roi.setSize((1, 1))
-            self.update()
-            event.accept()
-        else:
-            super().mousePressEvent(event)
-
-    def roiMenu(self):
-        rect = QtGui.QAction(u'Draw ROI', self)
-        rect.setCheckable(True)
-        rect.toggled.connect(self.drawRect)
-        self.menu.addAction(rect)
-
-    def drawRect(self, b):
-        if b:
-            self.drawing = True
-        else:
-            self.roi.hide()
-
-    @staticmethod
-    def _adjustValue(x):
-        if -1 < x < 1:
-            return -1 if x < 0 else 1
-        return x
-
 
 # Define yellow-hot colormap
 colors = np.array([[0, 0, 0], [255, 0, 0], [255, 255, 0]])
@@ -132,6 +64,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.btn_confocal_mode.addButton(self.btn_confocal_mode_yx, 1)
         self.btn_confocal_start.clicked.connect(self.confocal_start)
         self.btn_confocal_start_roi.clicked.connect(self.confocal_start_roi)
+        self.btn_confocal_start_preset1.clicked.connect(self.confocal_start_preset1)
+        self.btn_confocal_start_preset2.clicked.connect(self.confocal_start_preset2)
         self.btn_confocal_roi_undo.clicked.connect(self.confocal_roi_undo)
         self.btn_confocal_live.toggled.connect(self.confocal_live)
         self.int_confocal_live_avg.valueChanged.connect(self.confocal_live_set_avg)
@@ -151,7 +85,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # Create PyQtGraph plots and histogram for confocal scans
         for name in ['confocal', 'map']:
-            setattr(self, 'vb_%s' % name, ViewBoxWithROI())
+            setattr(self, 'vb_%s' % name, mainexp_widgets.ViewBoxWithROI())
             setattr(self, 'plt_%s' % name, pg.PlotItem(viewBox=getattr(self, 'vb_%s' % name)))
             setattr(self, 'qtimg_%s' % name, pg.ImageItem())
             getattr(self, 'vb_%s' % name).addItem(getattr(self, 'qtimg_%s' % name))
@@ -219,10 +153,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
         '''SET UP ALL GUI'''
         # Set up ranges and step limits in the gui fields
-        if os.path.isfile(os.path.expanduser(os.path.join('~', 'Documents', 'exp_config', 'guifield_settings.yaml'))):
-            gfspath = os.path.expanduser(os.path.join('~', 'Documents', 'exp_config', 'guifield_settings.yaml'))
+        if os.path.isfile(os.path.expanduser(os.path.join('~', 'Documents', 'exp_config', 'guifield_settings_confocal.yaml'))):
+            gfspath = os.path.expanduser(os.path.join('~', 'Documents', 'exp_config', 'guifield_settings_confocal.yaml'))
         else:
-            gfspath = 'guifield_settings.yaml'
+            gfspath = 'guifield_settings_confocal.yaml'
 
         if os.path.isfile(gfspath):
             gfs = file_utils.yaml2dict(gfspath)
@@ -237,7 +171,7 @@ class MainWindow(QtWidgets.QMainWindow):
                             getattr(target, setting)(gfs[field][setting])
                 except AttributeError:
                     print('Field %s does not exist.' % field)
-            print('loading guifield_settings.yaml')
+            print('loading guifield_settings_confocal.yaml')
 
         processEvents()
 
@@ -319,6 +253,24 @@ class MainWindow(QtWidgets.QMainWindow):
             self.confocal_start()
         else:
             raise Exception('No ROI Selected')
+
+    def confocal_start_preset1(self):
+        self.confocal_settings_store()
+
+        self.dbl_confocal_x_start.setValue(-self.dbl_confocal_preset1.value()/2)
+        self.dbl_confocal_x_stop.setValue(+self.dbl_confocal_preset1.value()/2)
+        self.dbl_confocal_y_start.setValue(-self.dbl_confocal_preset1.value()/2)
+        self.dbl_confocal_y_stop.setValue(+self.dbl_confocal_preset1.value()/2)
+        self.confocal_start()
+
+    def confocal_start_preset2(self):
+        self.confocal_settings_store()
+
+        self.dbl_confocal_x_start.setValue(-self.dbl_confocal_preset2.value()/2)
+        self.dbl_confocal_x_stop.setValue(+self.dbl_confocal_preset2.value()/2)
+        self.dbl_confocal_y_start.setValue(-self.dbl_confocal_preset2.value()/2)
+        self.dbl_confocal_y_stop.setValue(+self.dbl_confocal_preset2.value()/2)
+        self.confocal_start()
 
     def map_start_roi(self):
         roi = self.vb_map.roi
@@ -564,15 +516,25 @@ class MainWindow(QtWidgets.QMainWindow):
         file_utils.save_config(outdata, path=os.path.expanduser(os.path.join('~', 'Documents', 'exp_config')))
 
     def set_gui_defaults(self):
-        pass # todo
+        self.set_gui_btn_enable('all', True)
+        self.set_gui_input_enable('all', True)
+        self.btn_confocal_live.setChecked(False)
+        # Disable the stop buttons
+        self.btn_confocal_stop.setEnabled(self.thread_confocal.isRunning())
+        self.btn_liveapd_stop.setEnabled(self.thread_liveapd.isRunning())
 
     def set_gui_btn_enable(self, section, bool_set):
         if section in ['confocal', 'all']:
             self.btn_confocal_start.setEnabled(bool_set)
+            self.btn_confocal_start_preset1.setEnabled(bool_set)
+            self.btn_confocal_start_preset2.setEnabled(bool_set)
             self.btn_confocal_live.setEnabled(bool_set)
             self.btn_confocal_roi_undo.setEnabled(bool_set)
             self.btn_confocal_start_roi.setEnabled(bool_set)
             self.btn_map_start_roi.setEnabled(bool_set)
+        if section in ['liveapd', 'all']:
+            self.btn_liveapd_start.setEnabled(bool_set)
+            self.btn_liveapd_clear.setEnabled(bool_set)
 
     def set_gui_input_enable(self, section, bool_set):
         if section in ['confocal', 'all']:

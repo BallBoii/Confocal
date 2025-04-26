@@ -19,6 +19,68 @@ import widget_terminal
 import widget_shortcuts
 
 
+class ViewBoxWithROI(pg.ViewBox):
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.drawing = False
+        self.roi = None
+        self.pos = None
+
+        self.roiMenu()
+
+    def mouseMoveEvent(self, event):
+        if self.drawing:
+            delta = self.mapSceneToView(self.pos) - self.mapSceneToView(event.scenePos())
+            self.roi.setSize([self._adjustValue(- delta.x()), self._adjustValue(- delta.y())])
+            self.update()
+            event.accept()
+        else:
+            super().mouseMoveEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        if self.drawing:
+            self.pos = None
+            self.drawing = False
+            event.accept()
+        else:
+            super().mouseReleaseEvent(event)
+
+    def mousePressEvent(self, event):
+        if event.button() == QtCore.Qt.MouseButton.LeftButton and self.drawing:
+            self.pos = event.scenePos()
+            if not self.roi:
+                roi = pg.RectROI(self.mapSceneToView(self.pos), (1, 1), removable=False, invertible=True, rotatable=False)
+                self.addItem(roi)
+                self.roi = roi
+            else:
+                self.roi.show()
+                self.roi.setPos(self.mapSceneToView(self.pos))
+                self.roi.setSize((1, 1))
+            self.update()
+            event.accept()
+        else:
+            super().mousePressEvent(event)
+
+    def roiMenu(self):
+        rect = QtGui.QAction(u'Draw ROI', self)
+        rect.setCheckable(True)
+        rect.toggled.connect(self.drawRect)
+        self.menu.addAction(rect)
+
+    def drawRect(self, b):
+        if b:
+            self.drawing = True
+        else:
+            self.roi.hide()
+
+    @staticmethod
+    def _adjustValue(x):
+        if -1 < x < 1:
+            return -1 if x < 0 else 1
+        return x
+
+
 class TrackerControl(QtWidgets.QWidget, widget_tracker.Ui_Form):
     def __init__(self, mainexp):
         super().__init__()
