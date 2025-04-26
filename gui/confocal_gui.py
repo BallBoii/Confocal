@@ -115,7 +115,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.wait_liveapd = QtCore.QWaitCondition()
 
         '''INSTRUMENT INITIALIZATION'''
-        instpath = os.path.expanduser(os.path.join('~', 'Documents', 'exp_config', 'inst_params.yaml'))
+        instpath = os.path.expanduser(os.path.join('~', 'Documents', 'exp_config', 'confocal_params.yaml'))
         if os.path.isfile(instpath):
             self.inst_params = file_utils.yaml2dict(instpath)
         else:

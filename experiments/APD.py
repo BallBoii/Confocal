@@ -15,13 +15,8 @@ class LiveAPD(ExpThread.ExpThread):
     def __init__(self, mainexp, wait_condition):
         super().__init__(mainexp, wait_condition)
 
-        ctrapd = self.mainexp.inst_params['instruments']['ctrapd']
-        self.ci_chan = ctrapd['addr']['dev']
-        self.ci_src = ctrapd['addr_src']
-
-        ctrclk = self.mainexp.inst_params['instruments']['ctrclk']
-        self.clk_chan = ctrclk['addr']['dev']
-        self.clk_out = ctrclk['addr_out']
+        self.ctrapd = self.mainexp.inst_params['instruments']['ctrapd']
+        self.ctrclk = self.mainexp.inst_params['instruments']['ctrclk']
 
         self.signal_liveapd_updateplots.connect(mainexp.liveapd_updateplots)
         self.signal_liveapd_grab_screenshots.connect(mainexp.liveapd_grab_screenshots)
@@ -37,11 +32,11 @@ class LiveAPD(ExpThread.ExpThread):
         self.cancel = False
 
         with nidaqmx.Task('counter') as ci_task, nidaqmx.Task('clock') as clk_task:
-            ci_task.ci_channels.add_ci_count_edges_chan(self.ci_chan)
-            ci_task.ci_channels[0].ci_count_edges_term = self.ci_src
-            ci_task.timing.cfg_samp_clk_timing(1, source=self.clk_out)
+            ci_task.ci_channels.add_ci_count_edges_chan(self.ctrapd['dev'])
+            ci_task.ci_channels[0].ci_count_edges_term = self.ctrapd['addr_src']
+            ci_task.timing.cfg_samp_clk_timing(1, source=self.ctrclk['addr_out'])
 
-            clk_task.co_channels.add_co_pulse_chan_freq(self.clk_chan)
+            clk_task.co_channels.add_co_pulse_chan_freq(self.ctrclk['dev'])
             acqtime = self.mainexp.dbl_liveapd_acqtime.value()
             clk_task.co_channels[0].co_pulse_freq = 1 / acqtime
             clk_task.timing.cfg_implicit_timing(sample_mode=AcquisitionType.CONTINUOUS)

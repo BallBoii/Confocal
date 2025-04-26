@@ -31,8 +31,6 @@ class Confocal(ExpThread.ExpThread):
         self.var2 = []
         self.var3 = []
 
-        self.autoZ = False
-        self.isESR = False  # Use for alternating ESR on-off. There should be a better place to put this though.
         self.isLive = False
         self.confocal_live_stacks = []
         self.confocal_live_avg = 1
@@ -43,6 +41,12 @@ class Confocal(ExpThread.ExpThread):
         self.signal_confocal_updateplot.connect(mainexp.confocal_updateplot)
 
         self.plane_coef = [0, 0, 1, 5]  # coefficients for Ax + By + Cz = D for autoZ
+
+        self.galvos = self.mainexp.inst_params['instruments']['galvos']
+        self.galvos['scaleX'] = eval(self.galvos['scaleX'])
+        self.galvos['scaleY'] = eval(self.galvos['scaleY'])
+        self.ctrapd = self.mainexp.inst_params['instruments']['ctrapd']
+
 
     def prep_mainexp(self):
         self.mainexp.datasaved = False
@@ -101,16 +105,11 @@ class Confocal(ExpThread.ExpThread):
             self.wait_for_mainexp()
 
     def set_pos(self, x, y):
-        galpie = self.mainexp.inst_params['instruments']['galpie']
-        aoX, aoY = galpie['addr']['aoX'], galpie['addr']['aoY']
-        scaleX, scaleY = eval(galpie['set_scale']['volt_per_micron'][0]), eval(galpie['set_scale']['volt_per_micron'][1])
-        offsetX, offsetY = galpie['set_scale']['offset'][0], galpie['set_scale']['offset'][1]
+        vx = x * self.galvos['scaleX'] + self.galvos['offsetX']
+        vy = y * self.galvos['scaleY'] + self.galvos['offsetY']
 
-        vx = x*scaleX + offsetX
-        vy = y*scaleY + offsetY
-
-        with nidaqmx.Task('Galvo') as ao_task:
-            ao_task.ao_channels.add_ao_voltage_chan(f'{aoX},{aoY}')
+        with nidaqmx.Task('Galvos') as ao_task:
+            ao_task.ao_channels.add_ao_voltage_chan(f'{self.galvos['aoX']},{self.galvos['aoY']}')
 
             ao_task.write([vx, vy])
 
@@ -141,33 +140,22 @@ class Confocal(ExpThread.ExpThread):
                                 np.atleast_3d(self.confocal_live_stacks).shape[2] == self.confocal_live_avg
 
     def sweep_single_frame(self, rev=False):
-        # todo: change address / change yaml structure
-        galpie = self.mainexp.inst_params['instruments']['galpie']
-        aoX, aoY = galpie['addr']['aoX'], galpie['addr']['aoY']
-        scaleX, scaleY = eval(galpie['set_scale']['volt_per_micron'][0]), eval(galpie['set_scale']['volt_per_micron'][1])
-        offsetX, offsetY = galpie['set_scale']['offset'][0], galpie['set_scale']['offset'][1]
-
-        ctrapd = self.mainexp.inst_params['instruments']['ctrapd']
-        ci = ctrapd['addr']['dev']
-        ci_src = ctrapd['addr_src']
-
         rate = 1/self.acqtime
 
         if not self.cancel:
             with (nidaqmx.Task('Galvo') as ao_task, nidaqmx.Task('Counter') as ci_task):
 
-                ao_task.ao_channels.add_ao_voltage_chan(f'{aoX},{aoY}')
+                ao_task.ao_channels.add_ao_voltage_chan(f'{self.galvos['aoX']},{self.galvos['aoY']}')
                 ao_task.timing.cfg_samp_clk_timing(rate, source='', samps_per_chan=len(self.var1)*len(self.var2) + 1)
 
-                ci_task.ci_channels.add_ci_count_edges_chan(f'{ci}')
+                ci_task.ci_channels.add_ci_count_edges_chan(f'{self.ctrapd['dev']}')
                 ci_task.timing.cfg_samp_clk_timing(rate, source='ao/SampleClock', samps_per_chan=len(self.var1)*len(self.var2) + 1)
                 ci_task.triggers.arm_start_trigger.dig_edge_src = 'ao/StartTrigger'
-                ci_task.ci_channels[0].ci_count_edges_term = ci_src
+                ci_task.ci_channels[0].ci_count_edges_term = self.ctrapd['addr_src']
 
                 # Build a sweep list
                 xlist = np.array([])
                 ylist = np.array([])
-                # zlist = np.array([])
 
                 if self.mode == 0:
                     for i, y in enumerate(self.var2):
@@ -177,15 +165,13 @@ class Confocal(ExpThread.ExpThread):
                             xlist = np.append(xlist, np.flip(self.var1, axis=0))
 
                         ylist = np.append(ylist, np.ones(len(self.var1)) * y)
-                        # zlist = np.append(zlist, np.ones(len(self.var1)) * self.var3[0])
 
                     if rev:
                         xlist = np.flip(xlist, axis=0)
                         ylist = np.flip(ylist, axis=0)
-                        # zlist = np.flip(zlist, axis=0)
 
-                    xlist = np.append(xlist, xlist[-1]) * scaleX + offsetX
-                    ylist = np.append(ylist, ylist[-1]) * scaleY + offsetY
+                    xlist = np.append(xlist, xlist[-1]) * self.galvos['scaleX'] + self.galvos['offsetX']
+                    ylist = np.append(ylist, ylist[-1]) * self.galvos['scaleY'] + self.galvos['offsetY']
 
                     # zlist = np.append(zlist, zlist[-1])
 
