@@ -315,30 +315,32 @@ class MainWindow(QtWidgets.QMainWindow):
         self.thread_confocal.cancel = True
 
     def confocal_initplot(self):
-        start_x = self.confocal_rngx[0]
-        stop_x = self.confocal_rngx[-1]
-        start_y = self.confocal_rngy[0]
-        stop_y = self.confocal_rngy[-1]
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', r'All-NaN (slice|axis) encountered')
+            start_x = self.confocal_rngx[0]
+            stop_x = self.confocal_rngx[-1]
+            start_y = self.confocal_rngy[0]
+            stop_y = self.confocal_rngy[-1]
 
-        self.qtimg_confocal.setImage(self.confocal_pl[:, :, 0])
+            self.qtimg_confocal.setImage(self.confocal_pl[:, :, 0])
 
-        for name in ['confocal']:
-            qtimg = getattr(self, 'qtimg_%s' % name)
-            qtimg.resetTransform()  # need to call this. otherwise pos and scale are relative to previous
-            qtimg.setRect(start_x, start_y, (stop_x - start_x), (stop_y - start_y))
+            for name in ['confocal']:
+                qtimg = getattr(self, 'qtimg_%s' % name)
+                qtimg.resetTransform()  # need to call this. otherwise pos and scale are relative to previous
+                qtimg.setRect(start_x, start_y, (stop_x - start_x), (stop_y - start_y))
 
-        if self.confocal_mode == 0:
-            self.plt_confocal.setLabels(bottom='xpos (&mu;m)', left='ypos (&mu;m)')
-        if self.confocal_mode == 1:
-            self.plt_confocal.setLabels(bottom='xpos (&mu;m)', left='zpos (&mu;m)')
-        if self.confocal_mode == 2:
-            self.plt_confocal.setLabels(bottom='ypos (&mu;m)', left='zpos (&mu;m)')
+            if self.confocal_mode == 0:
+                self.plt_confocal.setLabels(bottom='xpos (&mu;m)', left='ypos (&mu;m)')
+            if self.confocal_mode == 1:
+                self.plt_confocal.setLabels(bottom='xpos (&mu;m)', left='zpos (&mu;m)')
+            if self.confocal_mode == 2:
+                self.plt_confocal.setLabels(bottom='ypos (&mu;m)', left='zpos (&mu;m)')
 
-        processEvents()
+            processEvents()
 
     def confocal_updateplot(self, zindex=0):
         with warnings.catch_warnings():
-            warnings.simplefilter('ignore', RuntimeWarning)  # for ignoring warnings when plotting NaNs
+            warnings.filterwarnings('ignore', r'All-NaN (slice|axis) encountered')
 
             self.qtimg_confocal.setImage(self.confocal_pl[:, :, zindex])
             # self.hlw_confocal.setImageItem(self.qtimg_confocal)
