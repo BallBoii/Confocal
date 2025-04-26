@@ -19,7 +19,7 @@
      <rect>
       <x>510</x>
       <y>710</y>
-      <width>81</width>
+      <width>71</width>
       <height>22</height>
      </rect>
     </property>
@@ -81,7 +81,7 @@
      <rect>
       <x>510</x>
       <y>730</y>
-      <width>81</width>
+      <width>71</width>
       <height>22</height>
      </rect>
     </property>
@@ -104,7 +104,7 @@
      <rect>
       <x>420</x>
       <y>710</y>
-      <width>81</width>
+      <width>71</width>
       <height>22</height>
      </rect>
     </property>
@@ -127,7 +127,7 @@
      <rect>
       <x>510</x>
       <y>690</y>
-      <width>81</width>
+      <width>71</width>
       <height>22</height>
      </rect>
     </property>
@@ -150,7 +150,7 @@
      <rect>
       <x>420</x>
       <y>730</y>
-      <width>81</width>
+      <width>71</width>
       <height>22</height>
      </rect>
     </property>
@@ -160,7 +160,7 @@
      <rect>
       <x>420</x>
       <y>690</y>
-      <width>81</width>
+      <width>71</width>
       <height>22</height>
      </rect>
     </property>
@@ -260,7 +260,7 @@
      <rect>
       <x>310</x>
       <y>710</y>
-      <width>81</width>
+      <width>71</width>
       <height>22</height>
      </rect>
     </property>
@@ -302,7 +302,7 @@
      <rect>
       <x>310</x>
       <y>730</y>
-      <width>81</width>
+      <width>71</width>
       <height>22</height>
      </rect>
     </property>
@@ -367,7 +367,7 @@
      <rect>
       <x>310</x>
       <y>690</y>
-      <width>81</width>
+      <width>71</width>
       <height>22</height>
      </rect>
     </property>
@@ -420,7 +420,7 @@
    <widget class="QPushButton" name="btn_map_copy">
     <property name="geometry">
      <rect>
-      <x>1240</x>
+      <x>1170</x>
       <y>50</y>
       <width>51</width>
       <height>23</height>
@@ -433,7 +433,7 @@
    <widget class="QPushButton" name="btn_map_start_roi">
     <property name="geometry">
      <rect>
-      <x>1090</x>
+      <x>1020</x>
       <y>50</y>
       <width>51</width>
       <height>23</height>
@@ -457,7 +457,7 @@
    <widget class="QPushButton" name="btn_map_select">
     <property name="geometry">
      <rect>
-      <x>1290</x>
+      <x>1220</x>
       <y>50</y>
       <width>51</width>
       <height>23</height>
@@ -486,7 +486,7 @@
    <widget class="QPushButton" name="btn_map_load">
     <property name="geometry">
      <rect>
-      <x>1190</x>
+      <x>1120</x>
       <y>50</y>
       <width>51</width>
       <height>23</height>
@@ -650,9 +650,9 @@
    <widget class="QDoubleSpinBox" name="dbl_tracker_ypos">
     <property name="geometry">
      <rect>
-      <x>1410</x>
+      <x>1370</x>
       <y>50</y>
-      <width>60</width>
+      <width>81</width>
       <height>23</height>
      </rect>
     </property>
@@ -660,9 +660,9 @@
    <widget class="QDoubleSpinBox" name="dbl_tracker_xpos">
     <property name="geometry">
      <rect>
-      <x>1350</x>
+      <x>1290</x>
       <y>50</y>
-      <width>60</width>
+      <width>81</width>
       <height>23</height>
      </rect>
     </property>
@@ -686,9 +686,9 @@
    <widget class="QDoubleSpinBox" name="dbl_tracker_zpos">
     <property name="geometry">
      <rect>
-      <x>1470</x>
+      <x>1449</x>
       <y>50</y>
-      <width>60</width>
+      <width>81</width>
       <height>23</height>
      </rect>
     </property>
