@@ -196,7 +196,6 @@ class Confocal(ExpThread.ExpThread):
                     ylist = np.flip(ylist, axis=0)
                     # zlist = np.flip(zlist, axis=0)
 
-                print(xlist, scaleX, offsetX)
                 xlist = np.append(xlist, xlist[-1]) * scaleX + offsetX
                 ylist = np.append(ylist, ylist[-1]) * scaleY + offsetY
 

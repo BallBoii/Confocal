@@ -17,9 +17,9 @@
    <widget class="QDoubleSpinBox" name="dbl_confocal_z_stop">
     <property name="geometry">
      <rect>
-      <x>490</x>
+      <x>510</x>
       <y>710</y>
-      <width>51</width>
+      <width>81</width>
       <height>22</height>
      </rect>
     </property>
@@ -27,7 +27,7 @@
    <widget class="QRadioButton" name="btn_confocal_mode_yx">
     <property name="geometry">
      <rect>
-      <x>610</x>
+      <x>670</x>
       <y>720</y>
       <width>71</width>
       <height>17</height>
@@ -69,9 +69,9 @@
    <widget class="QDoubleSpinBox" name="dbl_confocal_acqtime">
     <property name="geometry">
      <rect>
-      <x>90</x>
+      <x>61</x>
       <y>730</y>
-      <width>62</width>
+      <width>91</width>
       <height>22</height>
      </rect>
     </property>
@@ -79,9 +79,9 @@
    <widget class="QSpinBox" name="int_confocal_z_numdivs">
     <property name="geometry">
      <rect>
-      <x>490</x>
+      <x>510</x>
       <y>730</y>
-      <width>51</width>
+      <width>81</width>
       <height>22</height>
      </rect>
     </property>
@@ -91,7 +91,7 @@
      <rect>
       <x>160</x>
       <y>730</y>
-      <width>51</width>
+      <width>61</width>
       <height>22</height>
      </rect>
     </property>
@@ -104,7 +104,7 @@
      <rect>
       <x>420</x>
       <y>710</y>
-      <width>51</width>
+      <width>81</width>
       <height>22</height>
      </rect>
     </property>
@@ -125,9 +125,9 @@
    <widget class="QDoubleSpinBox" name="dbl_confocal_z_start">
     <property name="geometry">
      <rect>
-      <x>490</x>
+      <x>510</x>
       <y>690</y>
-      <width>51</width>
+      <width>81</width>
       <height>22</height>
      </rect>
     </property>
@@ -150,7 +150,7 @@
      <rect>
       <x>420</x>
       <y>730</y>
-      <width>51</width>
+      <width>81</width>
       <height>22</height>
      </rect>
     </property>
@@ -160,7 +160,7 @@
      <rect>
       <x>420</x>
       <y>690</y>
-      <width>51</width>
+      <width>81</width>
       <height>22</height>
      </rect>
     </property>
@@ -184,7 +184,7 @@
    <widget class="QPushButton" name="btn_confocal_live">
     <property name="geometry">
      <rect>
-      <x>210</x>
+      <x>220</x>
       <y>730</y>
       <width>51</width>
       <height>22</height>
@@ -213,7 +213,7 @@
    <widget class="QLabel" name="label_confocal_z">
     <property name="geometry">
      <rect>
-      <x>490</x>
+      <x>510</x>
       <y>670</y>
       <width>47</width>
       <height>13</height>
@@ -229,7 +229,7 @@
    <widget class="QPushButton" name="btn_confocal_start_roi">
     <property name="geometry">
      <rect>
-      <x>540</x>
+      <x>600</x>
       <y>690</y>
       <width>51</width>
       <height>23</height>
@@ -260,7 +260,7 @@
      <rect>
       <x>310</x>
       <y>710</y>
-      <width>51</width>
+      <width>81</width>
       <height>22</height>
      </rect>
     </property>
@@ -302,7 +302,7 @@
      <rect>
       <x>310</x>
       <y>730</y>
-      <width>51</width>
+      <width>81</width>
       <height>22</height>
      </rect>
     </property>
@@ -310,7 +310,7 @@
    <widget class="QRadioButton" name="btn_confocal_mode_xy">
     <property name="geometry">
      <rect>
-      <x>610</x>
+      <x>670</x>
       <y>700</y>
       <width>71</width>
       <height>17</height>
@@ -323,7 +323,7 @@
    <widget class="QPushButton" name="btn_confocal_roi_undo">
     <property name="geometry">
      <rect>
-      <x>540</x>
+      <x>600</x>
       <y>730</y>
       <width>51</width>
       <height>21</height>
@@ -367,7 +367,7 @@
      <rect>
       <x>310</x>
       <y>690</y>
-      <width>51</width>
+      <width>81</width>
       <height>22</height>
      </rect>
     </property>
@@ -745,7 +745,7 @@
      <x>0</x>
      <y>0</y>
      <width>1619</width>
-     <height>26</height>
+     <height>22</height>
     </rect>
    </property>
   </widget>

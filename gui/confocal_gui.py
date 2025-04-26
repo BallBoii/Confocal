@@ -3,14 +3,12 @@ from PyQt6 import QtGui, QtCore, QtWidgets, uic
 # system imports
 import sys, os, struct, scipy.io, warnings, functools, time, datetime
 import pyqtgraph as pg
-import PyDAQmx
 import pdb
 import numpy as np
 import csv
 
 # user-defined imports
 import file_utils
-import instruments as instr
 import experiments as exp
 
 # import UI files
@@ -99,9 +97,9 @@ class MainWindow(QtWidgets.QMainWindow):
         super().__init__(*args, **kwargs)
         uic.loadUi("gui/confocal.ui", self)
 
-        # configure PyQTgraph to use white background
-        pg.setConfigOption('background', 'w')
-        pg.setConfigOption('foreground', 'k')
+        # # configure PyQTgraph to use white background
+        # pg.setConfigOption('background', 'w')
+        # pg.setConfigOption('foreground', 'k')
 
 
         self.setFixedSize(self.size())
