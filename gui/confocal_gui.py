@@ -74,6 +74,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.btn_confocal_pxsync.clicked.connect(self.confocal_pxsync)
         self.chkbx_confocal_autolevel.setChecked(True)
         self.chkbx_confocal_autolevel.stateChanged.connect(self.confocal_set_autolevel)
+        self.btn_confocal_acqtime_inc.clicked.connect(self.confocal_acqtime_inc)
+        self.btn_confocal_acqtime_dec.clicked.connect(self.confocal_acqtime_dec)
 
         self.confocal_mode = 0
         self.confocal_rngx = []
@@ -271,6 +273,26 @@ class MainWindow(QtWidgets.QMainWindow):
         self.dbl_confocal_y_start.setValue(-self.dbl_confocal_preset2.value()/2)
         self.dbl_confocal_y_stop.setValue(+self.dbl_confocal_preset2.value()/2)
         self.confocal_start()
+
+    def confocal_acqtime_inc(self):
+        acqtimes = [0, 0.00001, 0.00002, 0.00005,
+                    0.00010, 0.00020, 0.00050,
+                    0.00100, 0.00200, 0.00500,
+                    0.01000, 0.02000, 0.05000,
+                    0.10000, 0.20000, 0.50000,
+                    1.00000, 2.00000, 5.00000]
+
+        self.dbl_confocal_acqtime.setValue(acqtimes[np.searchsorted(acqtimes, self.dbl_confocal_acqtime.value(), side='right')])
+
+    def confocal_acqtime_dec(self):
+        acqtimes = [0, 0.00001, 0.00002, 0.00005,
+                    0.00010, 0.00020, 0.00050,
+                    0.00100, 0.00200, 0.00500,
+                    0.01000, 0.02000, 0.05000,
+                    0.10000, 0.20000, 0.50000,
+                    1.00000, 2.00000, 5.00000]
+
+        self.dbl_confocal_acqtime.setValue(acqtimes[np.searchsorted(acqtimes, self.dbl_confocal_acqtime.value(), side='left') - 1])
 
     def map_start_roi(self):
         roi = self.vb_map.roi
