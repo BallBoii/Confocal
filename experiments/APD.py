@@ -1,12 +1,12 @@
 from PyQt6.QtCore import pyqtSignal
 import time
 import numpy as np
-import PyDAQmx
-import warnings
+import nidaqmx
+from nidaqmx.constants import AcquisitionType, READ_ALL_AVAILABLE
 
 from . import ExpThread
 
-
+# todo: this should be called count rate monitor
 class LiveAPD(ExpThread.ExpThread):
 
     signal_liveapd_updateplots = pyqtSignal(float, float)
@@ -15,51 +15,52 @@ class LiveAPD(ExpThread.ExpThread):
     def __init__(self, mainexp, wait_condition):
         super().__init__(mainexp, wait_condition)
 
+        ctrapd = self.mainexp.inst_params['instruments']['ctrapd']
+        self.ci_chan = ctrapd['addr']['dev']
+        self.ci_src = ctrapd['addr_src']
+
+        ctrclk = self.mainexp.inst_params['instruments']['ctrclk']
+        self.clk_chan = ctrclk['addr']['dev']
+        self.clk_out = ctrclk['addr_out']
+
         self.signal_liveapd_updateplots.connect(mainexp.liveapd_updateplots)
         self.signal_liveapd_grab_screenshots.connect(mainexp.liveapd_grab_screenshots)
 
     def update(self):
-        acqtime = self.mainexp.dbl_liveapd_acqtime.value()
-        pl = self.get_countrate(acqtime)
-
-        self.signal_liveapd_updateplots.emit(acqtime, pl)
-
-    def get_countrate(self, acqtime):
-        # fixme: This is stupid for ai, but it will work
-        self.mainexp.ctrapd.start()
-        self.mainexp.ctrtrig.set_time(acqtime)
-        self.mainexp.ctrtrig.start()
-        self.mainexp.ctrtrig.wait_until_done()
-        self.mainexp.ctrtrig.stop()
-        val = self.mainexp.ctrapd.get_count() / acqtime
-        self.mainexp.ctrapd.stop()
-        # val = self.mainexp.ai0.get_voltage()
-
-        return val
+        raise Exception('Single Count Rate Acquisition not implemented.')
 
     def run(self):
         self.mainexp.set_gui_btn_enable('all', False)
-        self.mainexp.set_gui_btn_enable('tracker', True)
-        self.mainexp.set_gui_input_enable('tracker', True)
         self.mainexp.btn_liveapd_stop.setEnabled(True)
         self.mainexp.btn_liveapd_clear.setEnabled(True)
-        self.mainexp.btn_nvlist_add.setEnabled(True)
-        self.mainexp.btn_seqapd_start.setEnabled(False)
-
-        # self.mainexp.ai0.reset()
-        self.mainexp.ctrapd.reset()
-        self.mainexp.ctrtrig.reset()
-        self.mainexp.ctrapd.set_pause_trigger(self.mainexp.inst_params['instruments']['ctrtrig']['addr_out'])
 
         self.cancel = False
-        while not self.cancel:
-            self.update()
 
-        self.mainexp.galpie.reset()
-        # self.mainexp.ai0.reset()
-        self.mainexp.ctrapd.reset()
-        self.mainexp.ctrclk.reset()
-        self.mainexp.ctrtrig.reset()
+        with nidaqmx.Task('counter') as ci_task, nidaqmx.Task('clock') as clk_task:
+            ci_task.ci_channels.add_ci_count_edges_chan(self.ci_chan)
+            ci_task.ci_channels[0].ci_count_edges_term = self.ci_src
+            ci_task.timing.cfg_samp_clk_timing(1, source=self.clk_out)
+
+            clk_task.co_channels.add_co_pulse_chan_freq(self.clk_chan)
+            acqtime = self.mainexp.dbl_liveapd_acqtime.value()
+            clk_task.co_channels[0].co_pulse_freq = 1 / acqtime
+            clk_task.timing.cfg_implicit_timing(sample_mode=AcquisitionType.CONTINUOUS)
+            clk_task.start()
+
+            lastcount = 0
+            ci_task.start()
+
+            while not self.cancel:
+                count = ci_task.read(1)[0]
+                pl = (count - lastcount)/acqtime
+                self.signal_liveapd_updateplots.emit(acqtime, pl)
+                lastcount = count
+
+                if self.mainexp.dbl_liveapd_acqtime.value() != acqtime:
+                    acqtime = self.mainexp.dbl_liveapd_acqtime.value()
+                    clk_task.co_channels[0].co_pulse_freq = 1 / acqtime
+
+        self.mainexp.set_gui_btn_enable('all', True)
 
     def save(self):
         if self.isRunning():
@@ -76,7 +77,7 @@ class LiveAPD(ExpThread.ExpThread):
 
         self.save_data(filename, data_dict, graph=graph, fig=graph)
 
-
+# todo: this should be called fast count rate monitor
 class SeqAPD(ExpThread.ExpThread):
 
     signal_seqapd_updateplots = pyqtSignal()
@@ -85,6 +86,14 @@ class SeqAPD(ExpThread.ExpThread):
     def __init__(self, mainexp, wait_condition):
         super().__init__(mainexp, wait_condition)
         self.mainexp = mainexp
+
+        ctrapd = self.mainexp.inst_params['instruments']['ctrapd']
+        self.ci_chan = ctrapd['addr']['dev']
+        self.ci_src = ctrapd['addr_src']
+
+        ctrclk = self.mainexp.inst_params['instruments']['ctrclk']
+        self.clk_chan = ctrclk['addr']['dev']
+        self.clk_out = ctrclk['addr_out']
 
         self.signal_seqapd_updateplots.connect(mainexp.seqapd_updateplots)
         self.signal_seqapd_grab_screenshots.connect(mainexp.seqapd_grab_screenshots)
@@ -97,78 +106,39 @@ class SeqAPD(ExpThread.ExpThread):
 
         self.mainexp.label_seqapd_filename.setText('SeqPLtime_%d' % self.mainexp.wavenum)
 
-        seqapd_acqtime = self.mainexp.dbl_seqapd_acqtime.value() * 0.001
-        numpnts = int(self.mainexp.dbl_seqapd_int_time.value() / seqapd_acqtime)
+        acqtime = self.mainexp.dbl_seqapd_acqtime.value() * 0.001
+        numpnts = int(self.mainexp.dbl_seqapd_int_time.value() / acqtime)
 
-        # set up counter
-        # self.mainexp.ctrapd.reset()
-        self.mainexp.ctrclk.reset()
-        self.mainexp.ctrtrig.set_time(0.001)
-        self.mainexp.ctrtrig.reset()
-        # create a ctrapd running on clock from ctrclk and wait for trigger from ctrtrig
-        self.mainexp.ctrapd.set_sample_clock(self.mainexp.inst_params['instruments']['ctrclk']['addr_out'],
-                                             PyDAQmx.DAQmx_Val_Rising, numpnts + 1)
-        self.mainexp.ctrapd.set_arm_start_trigger(self.mainexp.inst_params['instruments']['ctrtrig']['addr_out'],
-                                                  PyDAQmx.DAQmx_Val_Rising)
-        self.mainexp.ctrapd.set_read_all_samples(True)
-        # self.mainexp.ai0.set_sample_clock(self.mainexp.inst_params['instruments']['ctrclk']['addr_out'],
-        #                                      PyDAQmx.DAQmx_Val_Rising, numpnts + 1)
-        # self.mainexp.ai0.set_start_trigger(self.mainexp.inst_params['instruments']['ctrtrig']['addr_out'],
-        #                                           PyDAQmx.DAQmx_Val_Rising)
-        # self.mainexp.ai0.set_read_all_samples(True)
-        # creates a clock using pulses on self.mainexp.ctrclk (output to PFI7)
-        self.mainexp.ctrclk.set_freq(1 / seqapd_acqtime)
-        self.mainexp.ctrclk.start()
-        time.sleep(.5)
+        with nidaqmx.Task('counter') as ci_task, nidaqmx.Task('clock') as clk_task:
+            # todo: does it matter which task starts first?
+            ci_task.ci_channels.add_ci_count_edges_chan(self.ci_chan)
+            ci_task.ci_channels[0].ci_count_edges_term = self.ci_src
+            ci_task.timing.cfg_samp_clk_timing(1, source=self.clk_out, samps_per_chan=(numpnts + 1))
 
-        # start acquiring data
-        self.mainexp.ctrapd.start()
-        # self.mainexp.ai0.start()
-        self.mainexp.ctrtrig.start()
-        self.mainexp.ctrtrig.wait_until_done()
-        self.mainexp.ctrtrig.stop()
+            clk_task.co_channels.add_co_pulse_chan_freq(self.clk_chan)
+            clk_task.co_channels[0].co_pulse_freq = 1 / acqtime
+            clk_task.timing.cfg_implicit_timing(sample_mode=AcquisitionType.CONTINUOUS)
+            clk_task.start()
+            ci_task.start()
 
-        n_read = 0
-        t_update = 0.1
+            lastcount = 0
+            n_read = 0
+            t_update = 0.1
 
-        self.mainexp.seqapd_pl = np.array([])
+            self.mainexp.seqapd_pl = np.array([])
+            while not self.cancel and n_read < numpnts+1:
+                ctr_raw = ci_task.read(int(t_update / acqtime))
+                if n_read != 0:
+                    ctr_diff = np.diff(np.append([lastcount], ctr_raw))
+                else:
+                    ctr_diff = np.diff(ctr_raw)
 
-        last_counter = 0  # Actual counter value, which monotonically counts up and need to be diff to get count rate
-        # last_counter = self.mainexp.ai0.get_voltages(1)
-        n_read = 1
-
-        while not self.cancel and n_read < numpnts+1:
-            time.sleep(t_update)
-            # try to read twice as many samples as python time will always be slower
-            # (assume it doesn't take more than 2*t_update)
-            ctr_raw = self.mainexp.ctrapd.get_counts(int(t_update / seqapd_acqtime * 2))
-            # ctr_raw = self.mainexp.ai0.get_voltages(int(t_update / seqapd_acqtime * 2))
-            if n_read != 0:
-                ctr_diff = np.diff(np.append([last_counter], ctr_raw))
-            else:
-                ctr_diff = np.diff(ctr_raw)
-            if len(ctr_raw):
-                n_read += len(ctr_raw)
-                last_counter = ctr_raw[-1]
-                self.mainexp.seqapd_pl = np.append(self.mainexp.seqapd_pl, ctr_diff)
-                self.mainexp.seqapd_t = np.arange(len(self.mainexp.seqapd_pl)) * seqapd_acqtime
-                self.signal_seqapd_updateplots.emit()
-
-        if hasattr(PyDAQmx.DAQmxFunctions, 'DAQWarning'):
-            with warnings.catch_warnings():
-                warnings.simplefilter('ignore',
-                                      PyDAQmx.DAQmxFunctions.DAQWarning)  # for ignoring warnings when plotting NaNs
-
-                self.mainexp.ctrclk.stop()
-                self.mainexp.ctrclk.reset()
-                try:
-                    self.mainexp.ctrapd.stop()
-                    # self.mainexp.ai0.stop()
-                except PyDAQmx.DAQmxFunctions.DAQError:
-                    # It is normal for the PyDAQmx to throw an error when stopped prematurely
-                    pass
-                self.mainexp.ctrapd.reset()
-                # self.mainexp.ai0.reset()
+                if ctr_raw:
+                    n_read += len(ctr_raw)
+                    lastcount = ctr_raw[-1]
+                    self.mainexp.seqapd_pl = np.append(self.mainexp.seqapd_pl, ctr_diff)
+                    self.mainexp.seqapd_t = np.arange(len(self.mainexp.seqapd_pl)) * acqtime
+                    self.signal_seqapd_updateplots.emit()
 
         if self.mainexp.thread_terminal.isRunning() or self.mainexp.thread_batch.isRunning():
             self.save()

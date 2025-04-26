@@ -104,7 +104,7 @@
      <rect>
       <x>420</x>
       <y>710</y>
-      <width>71</width>
+      <width>91</width>
       <height>22</height>
      </rect>
     </property>
@@ -150,7 +150,7 @@
      <rect>
       <x>420</x>
       <y>730</y>
-      <width>71</width>
+      <width>91</width>
       <height>22</height>
      </rect>
     </property>
@@ -160,7 +160,7 @@
      <rect>
       <x>420</x>
       <y>690</y>
-      <width>71</width>
+      <width>91</width>
       <height>22</height>
      </rect>
     </property>
@@ -260,7 +260,7 @@
      <rect>
       <x>310</x>
       <y>710</y>
-      <width>71</width>
+      <width>91</width>
       <height>22</height>
      </rect>
     </property>
@@ -302,7 +302,7 @@
      <rect>
       <x>310</x>
       <y>730</y>
-      <width>71</width>
+      <width>91</width>
       <height>22</height>
      </rect>
     </property>
@@ -367,7 +367,7 @@
      <rect>
       <x>310</x>
       <y>690</y>
-      <width>71</width>
+      <width>91</width>
       <height>22</height>
      </rect>
     </property>
@@ -499,7 +499,7 @@
    <widget class="QPushButton" name="btn_confocal_pxsync">
     <property name="geometry">
      <rect>
-      <x>390</x>
+      <x>400</x>
       <y>730</y>
       <width>21</width>
       <height>23</height>
@@ -548,9 +548,9 @@
    <widget class="QDoubleSpinBox" name="dbl_liveapd_acqtime">
     <property name="geometry">
      <rect>
-      <x>990</x>
+      <x>980</x>
       <y>830</y>
-      <width>71</width>
+      <width>81</width>
       <height>22</height>
      </rect>
     </property>
@@ -576,12 +576,12 @@
      <rect>
       <x>890</x>
       <y>830</y>
-      <width>91</width>
+      <width>81</width>
       <height>22</height>
      </rect>
     </property>
     <property name="text">
-     <string>Acquisition Time (s)</string>
+     <string>Acq. Time (s)</string>
     </property>
    </widget>
    <widget class="GraphicsLayoutWidget" name="glw_liveapd">

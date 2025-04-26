@@ -112,6 +112,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.mutex = QtCore.QMutex()
         self.wait_confocal = QtCore.QWaitCondition()
+        self.wait_liveapd = QtCore.QWaitCondition()
 
         '''INSTRUMENT INITIALIZATION'''
         instpath = os.path.expanduser(os.path.join('~', 'Documents', 'exp_config', 'inst_params.yaml'))
@@ -122,6 +123,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         '''WORKER THREADS INITIALIZATION'''
         self.thread_confocal = exp.Confocal.Confocal(self, self.wait_confocal)
+        self.thread_liveapd = exp.APD.LiveAPD(self, self.wait_liveapd)
 
         '''CONFOCAL'''
         self.btn_confocal_mode_xy.setChecked(True)
@@ -203,6 +205,18 @@ class MainWindow(QtWidgets.QMainWindow):
         self.map_ax_xmax = 0
         self.map_ax_ymin = 0
         self.map_ax_ymax = 0
+
+        '''LIVE APD'''
+        self.btn_liveapd_clear.clicked.connect(self.liveapd_clear)
+        self.btn_liveapd_start.clicked.connect(self.liveapd_start)
+        self.btn_liveapd_stop.clicked.connect(self.liveapd_stop)
+        self.btn_liveapd_stop.setEnabled(False)
+
+        self.plt_liveapd = self.glw_liveapd.addPlot()
+        self.plt_liveapd.setLabels(title='Live APD', left='PL (Hz)', bottom='Time (s)')
+        self.curve_liveapd = self.plt_liveapd.plot(pen='r')
+        self.liveapd_pl = np.array([])
+        self.liveapd_t = np.array([])
 
         '''SET UP ALL GUI'''
         # Set up ranges and step limits in the gui fields
@@ -345,9 +359,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def confocal_live(self, b):
         if b:
-            if self.task_handler.everything_finished():
-                self.thread_confocal.isLive = True
-                self.thread_confocal.start()
+            self.thread_confocal.isLive = True
+            self.thread_confocal.start()
 
     def confocal_live_set_avg(self, v):
         self.thread_confocal.confocal_live_avg = v
@@ -497,6 +510,32 @@ class MainWindow(QtWidgets.QMainWindow):
         except TypeError:
             pass
 
+    def liveapd_start(self):
+        self.thread_liveapd.start()
+
+    def liveapd_stop(self):
+        self.thread_liveapd.cancel = True
+
+    def liveapd_updateplots(self, acqtime, pl):
+        self.liveapd_pl = np.append(self.liveapd_pl, pl)
+
+        if not len(self.liveapd_t):
+            self.liveapd_t = np.append(self.liveapd_t, 0)
+        else:
+            self.liveapd_t = np.append(self.liveapd_t, self.liveapd_t[-1] + acqtime)
+
+        self.curve_liveapd.setData(self.liveapd_t, self.liveapd_pl)
+        processEvents()
+
+    def liveapd_clear(self):
+        self.liveapd_pl = np.array([])
+        self.liveapd_t = np.array([])
+        self.curve_liveapd.setData([], [])
+
+    def liveapd_grab_screenshots(self):
+        self.pixmap_liveapd_graph = self.widget_liveapd.grab()
+        processEvents()
+
     def import_gui_settings(self, data):
         # refill the linein, double, and integer fields in the gui
         for attr in self.__dict__.keys():
@@ -536,16 +575,7 @@ class MainWindow(QtWidgets.QMainWindow):
             elif 'map_ax_' in attr:
                 outdata['map_ax'][attr] = getattr(self, attr)
 
-        outdata['cmdlog'] = self.label_terminal_cmdlog.toPlainText()
-
         file_utils.save_config(outdata, path=os.path.expanduser(os.path.join('~', 'Documents', 'exp_config')))
-
-        self.export_sweep_settings(os.path.expanduser(os.path.join('~', 'Documents', 'exp_config',
-                                                                   'sweep_params','manual.yaml')),
-                                   manual=True)
-        file_utils.table2csv(self.table_nvlist, os.path.expanduser(os.path.join('~', 'Documents', 'exp_config',
-                                                                                'table_nvlist.csv')))
-
 
     def set_gui_defaults(self):
         pass # todo
@@ -572,6 +602,9 @@ class MainWindow(QtWidgets.QMainWindow):
             self.int_confocal_z_numdivs.setEnabled(bool_set)
             self.dbl_confocal_acqtime.setEnabled(bool_set)
             self.confocal_zstack_enable(bool(self.int_confocal_z_numdivs.value()) and bool_set)
+
+    def closeEvent(self, *args, **kwargs):
+        self.export_gui_settings()
 
     def log(self, text):
         print(text) # todo

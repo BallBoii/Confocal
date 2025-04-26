@@ -437,7 +437,7 @@ class CustomLUTWidget(pg.GraphicsView):
         self.item = CustomLUTItem(*args, **kargs)
         self.setCentralItem(self.item)
         self.setSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.Expanding)
-        self.setMinimumWidth(56)
+        self.setMinimumWidth(80)
 
         self.gradient.rectSize = 7  # width of color bar
         self.gradient.tickSize = 5
