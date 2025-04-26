@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1619</width>
-    <height>928</height>
+    <height>905</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -114,6 +114,9 @@
     <property name="accelerated">
      <bool>true</bool>
     </property>
+    <property name="stepType">
+     <enum>QAbstractSpinBox::AdaptiveDecimalStepType</enum>
+    </property>
    </widget>
    <widget class="QPushButton" name="btn_confocal_start">
     <property name="geometry">
@@ -172,6 +175,9 @@
     </property>
     <property name="accelerated">
      <bool>true</bool>
+    </property>
+    <property name="stepType">
+     <enum>QAbstractSpinBox::AdaptiveDecimalStepType</enum>
     </property>
    </widget>
    <widget class="QLabel" name="label_confocal_numdivs">
@@ -276,6 +282,9 @@
     <property name="accelerated">
      <bool>true</bool>
     </property>
+    <property name="stepType">
+     <enum>QAbstractSpinBox::AdaptiveDecimalStepType</enum>
+    </property>
    </widget>
    <widget class="QCheckBox" name="chkbx_confocal_autolevel">
     <property name="geometry">
@@ -348,8 +357,8 @@
    <widget class="QLineEdit" name="linein_sample_name">
     <property name="geometry">
      <rect>
-      <x>160</x>
-      <y>39</y>
+      <x>140</x>
+      <y>40</y>
       <width>181</width>
       <height>31</height>
      </rect>
@@ -385,6 +394,9 @@
     </property>
     <property name="accelerated">
      <bool>true</bool>
+    </property>
+    <property name="stepType">
+     <enum>QAbstractSpinBox::AdaptiveDecimalStepType</enum>
     </property>
    </widget>
    <widget class="QLabel" name="label_confocal_stop">
@@ -422,8 +434,8 @@
    <widget class="QLabel" name="label_sample_name">
     <property name="geometry">
      <rect>
-      <x>90</x>
-      <y>50</y>
+      <x>80</x>
+      <y>40</y>
       <width>47</width>
       <height>21</height>
      </rect>
@@ -740,7 +752,7 @@
      <set>Qt::AlignCenter</set>
     </property>
    </widget>
-   <widget class="QPushButton" name="btn_tracker_home">
+   <widget class="QPushButton" name="btn_map_home">
     <property name="geometry">
      <rect>
       <x>1530</x>

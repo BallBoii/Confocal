@@ -134,6 +134,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.btn_map_copy.clicked.connect(self.map_copy)
         self.btn_map_select.clicked.connect(self.map_select)
         self.btn_map_start_roi.clicked.connect(self.map_start_roi)
+        self.btn_map_home.clicked.connect(self.tracker_home)
 
         self.map_data = np.array([])
         self.map_ax_xmin = 0
@@ -148,7 +149,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.btn_liveapd_stop.setEnabled(False)
 
         self.plt_liveapd = self.glw_liveapd.addPlot()
-        self.plt_liveapd.setLabels(title='Live APD', left='PL (Hz)', bottom='Time (s)')
+        self.plt_liveapd.setLabels(left='PL (Hz)', bottom='Time (s)')
         self.curve_liveapd = self.plt_liveapd.plot(pen='r')
         self.liveapd_pl = np.array([])
         self.liveapd_t = np.array([])
