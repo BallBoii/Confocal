@@ -108,6 +108,12 @@
       <height>22</height>
      </rect>
     </property>
+    <property name="accelerated">
+     <bool>true</bool>
+    </property>
+    <property name="stepType">
+     <enum>QAbstractSpinBox::AdaptiveDecimalStepType</enum>
+    </property>
    </widget>
    <widget class="QPushButton" name="btn_confocal_start">
     <property name="geometry">
@@ -163,6 +169,12 @@
       <width>91</width>
       <height>22</height>
      </rect>
+    </property>
+    <property name="accelerated">
+     <bool>true</bool>
+    </property>
+    <property name="stepType">
+     <enum>QAbstractSpinBox::AdaptiveDecimalStepType</enum>
     </property>
    </widget>
    <widget class="QLabel" name="label_confocal_numdivs">
@@ -263,6 +275,12 @@
       <width>91</width>
       <height>22</height>
      </rect>
+    </property>
+    <property name="accelerated">
+     <bool>true</bool>
+    </property>
+    <property name="stepType">
+     <enum>QAbstractSpinBox::AdaptiveDecimalStepType</enum>
     </property>
    </widget>
    <widget class="QCheckBox" name="chkbx_confocal_autolevel">
@@ -370,6 +388,12 @@
       <width>91</width>
       <height>22</height>
      </rect>
+    </property>
+    <property name="accelerated">
+     <bool>true</bool>
+    </property>
+    <property name="stepType">
+     <enum>QAbstractSpinBox::AdaptiveDecimalStepType</enum>
     </property>
    </widget>
    <widget class="QLabel" name="label_confocal_stop">
