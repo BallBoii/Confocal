@@ -344,7 +344,7 @@ class MainWindow(QtWidgets.QMainWindow):
             # self.hlw_confocal.setImageItem(self.qtimg_confocal)
 
             if self.confocal_mode == 0:
-                filename = 'PLxposypos_%d' % self.wavenum
+                filename = 'IMG_%04d' % self.wavenum
 
                 self.plt_confocal.setTitle('%s: Z = %.2f' % (filename, self.confocal_rngz[zindex]))
                 self.label_filename.setText(filename)
