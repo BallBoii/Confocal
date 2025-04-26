@@ -130,7 +130,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.btn_confocal_mode = QtWidgets.QButtonGroup()
         self.btn_confocal_mode.addButton(self.btn_confocal_mode_xy, 0)
         self.btn_confocal_mode.addButton(self.btn_confocal_mode_yx, 1)
-        self.btn_confocal_mode.buttonClicked.connect(self.confocal_mode_select)
         self.btn_confocal_start.clicked.connect(self.confocal_start)
         self.btn_confocal_start_roi.clicked.connect(self.confocal_start_roi)
         self.btn_confocal_roi_undo.clicked.connect(self.confocal_roi_undo)
@@ -257,34 +256,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.pixmap_confocal_graph = None
         self.pixmap_confocal_fig = None
-
-    def confocal_mode_select(self, btn_id):
-        isX = False; isY = False; isZ = False
-        if btn_id == 0:
-            isX = True
-            isY = True
-        if btn_id == 1:
-            isX = True
-            isZ = True
-        if btn_id == 2:
-            isY = True
-            isZ = True
-
-        if isX:
-            if self.int_confocal_x_numdivs.value() == 0:
-                self.int_confocal_x_numdivs.setValue(100)
-        else:
-            self.int_confocal_x_numdivs.setValue(0)
-        if isY:
-            if self.int_confocal_y_numdivs.value() == 0:
-                self.int_confocal_y_numdivs.setValue(100)
-        else:
-            self.int_confocal_y_numdivs.setValue(0)
-        if isZ:
-            if self.int_confocal_z_numdivs.value() == 0:
-                self.int_confocal_z_numdivs.setValue(100)
-        else:
-            self.int_confocal_z_numdivs.setValue(0)
 
     def confocal_pxsync(self, b):
         if b:
@@ -509,6 +480,21 @@ class MainWindow(QtWidgets.QMainWindow):
             self.plt_map.scene().sigMouseClicked.disconnect()
         except TypeError:
             pass
+
+    def tracker_drive(self):
+        xpos = self.dbl_tracker_xpos.value()
+        ypos = self.dbl_tracker_ypos.value()
+        zpos = self.dbl_tracker_zpos.value()
+
+        self.thread_confocal.set_pos(xpos, ypos)
+
+        self.map_updatecursor()
+
+    def tracker_home(self):
+        self.dbl_tracker_xpos.setValue(0)
+        self.dbl_tracker_ypos.setValue(0)
+        self.dbl_tracker_zpos.setValue(5)
+        self.tracker_drive()
 
     def liveapd_start(self):
         self.thread_liveapd.start()

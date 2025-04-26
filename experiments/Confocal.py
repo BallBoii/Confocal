@@ -66,48 +66,21 @@ class Confocal(ExpThread.ExpThread):
     def prepsweep(self):
         mainexp = self.mainexp
 
-        if self.mode == 0:  # XY Scan. Possible to do z-stacks
-            self.var1_id = 0
-            self.var2_id = 1
-            self.var3_id = 2
+        self.var1_id = 0
+        self.var2_id = 1
+        self.var3_id = 2
 
-            self.var1 = np.linspace(mainexp.dbl_confocal_x_start.value(), mainexp.dbl_confocal_x_stop.value(),
-                                    mainexp.int_confocal_x_numdivs.value() + 1)
-            self.var2 = np.linspace(mainexp.dbl_confocal_y_start.value(), mainexp.dbl_confocal_y_stop.value(),
-                                    mainexp.int_confocal_y_numdivs.value() + 1)
+        self.var1 = np.linspace(mainexp.dbl_confocal_x_start.value(), mainexp.dbl_confocal_x_stop.value(),
+                                mainexp.int_confocal_x_numdivs.value() + 1)
+        self.var2 = np.linspace(mainexp.dbl_confocal_y_start.value(), mainexp.dbl_confocal_y_stop.value(),
+                                mainexp.int_confocal_y_numdivs.value() + 1)
 
-            self.plane_coef = [0, 0, 1, 5]  # default to 0*x + 0*y + 1*z = 5
-
-            if not self.autoZ and mainexp.int_confocal_z_numdivs.value():
-                self.var3 = np.linspace(mainexp.dbl_confocal_z_start.value(), mainexp.dbl_confocal_z_stop.value(),
-                                        mainexp.int_confocal_z_numdivs.value() + 1)
-            else:
-                # ignore the z-range setting
-                self.var3 = np.linspace(mainexp.dbl_tracker_zpos.value(), mainexp.dbl_tracker_zpos.value(), 1)
-
-        if self.mode == 1:  # XZ Scan. No stacks
-            self.var1_id = 0
-            self.var2_id = 2
-            self.var3_id = 1
-
-            self.var1 = np.linspace(mainexp.dbl_confocal_x_start.value(), mainexp.dbl_confocal_x_stop.value(),
-                                    mainexp.int_confocal_x_numdivs.value() + 1)
-            self.var2 = np.linspace(mainexp.dbl_confocal_z_start.value(), mainexp.dbl_confocal_z_stop.value(),
+        if mainexp.int_confocal_z_numdivs.value():
+            self.var3 = np.linspace(mainexp.dbl_confocal_z_start.value(), mainexp.dbl_confocal_z_stop.value(),
                                     mainexp.int_confocal_z_numdivs.value() + 1)
-            self.var3 = np.linspace(mainexp.dbl_tracker_ypos.value(), mainexp.dbl_tracker_ypos.value(), 1)
-            self.autoZ = False
-
-        if self.mode == 2:  # YZ Scan. No stacks
-            self.var1_id = 1
-            self.var2_id = 2
-            self.var3_id = 0
-
-            self.var1 = np.linspace(mainexp.dbl_confocal_y_start.value(), mainexp.dbl_confocal_y_stop.value(),
-                                    mainexp.int_confocal_y_numdivs.value() + 1)
-            self.var2 = np.linspace(mainexp.dbl_confocal_z_start.value(), mainexp.dbl_confocal_z_stop.value(),
-                                    mainexp.int_confocal_z_numdivs.value() + 1)
-            self.var3 = np.linspace(mainexp.dbl_tracker_xpos.value(), mainexp.dbl_tracker_xpos.value(), 1)
-            self.autoZ = False
+        else:
+            # ignore the z-range setting
+            self.var3 = np.linspace(mainexp.dbl_tracker_zpos.value(), mainexp.dbl_tracker_zpos.value(), 1)
 
         mainexp.confocal_mode = self.mode
         mainexp.confocal_rngx = self.var1
@@ -126,6 +99,20 @@ class Confocal(ExpThread.ExpThread):
 
         if self.isRunning():
             self.wait_for_mainexp()
+
+    def set_pos(self, x, y):
+        galpie = self.mainexp.inst_params['instruments']['galpie']
+        aoX, aoY = galpie['addr']['aoX'], galpie['addr']['aoY']
+        scaleX, scaleY = eval(galpie['set_scale']['volt_per_micron'][0]), eval(galpie['set_scale']['volt_per_micron'][1])
+        offsetX, offsetY = galpie['set_scale']['offset'][0], galpie['set_scale']['offset'][1]
+
+        vx = x*scaleX + offsetX
+        vy = y*scaleY + offsetY
+
+        with nidaqmx.Task('Galvo') as ao_task:
+            ao_task.ao_channels.add_ao_voltage_chan(f'{aoX},{aoY}')
+
+            ao_task.write([vx, vy])
 
     def sweep(self):
         rev = False
@@ -182,62 +169,121 @@ class Confocal(ExpThread.ExpThread):
                 ylist = np.array([])
                 # zlist = np.array([])
 
-                for i, y in enumerate(self.var2):
-                    if not i % 2:
-                        xlist = np.append(xlist, self.var1)
-                    else:
-                        xlist = np.append(xlist, np.flip(self.var1, axis=0))
-
-                    ylist = np.append(ylist, np.ones(len(self.var1)) * y)
-                    # zlist = np.append(zlist, np.ones(len(self.var1)) * self.var3[0])
-
-                if rev:
-                    xlist = np.flip(xlist, axis=0)
-                    ylist = np.flip(ylist, axis=0)
-                    # zlist = np.flip(zlist, axis=0)
-
-                xlist = np.append(xlist, xlist[-1]) * scaleX + offsetX
-                ylist = np.append(ylist, ylist[-1]) * scaleY + offsetY
-
-                # zlist = np.append(zlist, zlist[-1])
-
-                ci_task.start()
-                ao_task.write(np.vstack((xlist,ylist)), auto_start=True)
-
-                self.mainexp.seqapd_pl = np.array([])
-
-                numpnts1 = len(self.var1)
-                numpnts2 = len(self.var2)
-
-                last_counter = ci_task.read(1)
-
-                for index_y in range(numpnts2):
-                    if not self.cancel:
-                        # This will wait until the entire row is read
-
-                        ctr_raw = ci_task.read(numpnts1)
-                        ctr_diff = np.diff(np.append([last_counter], ctr_raw)) / self.acqtime
-
-                        last_counter = ctr_raw[-1]
-
-                        # Forward meander scan (increasing yvals)
-                        if not rev:
-                            if not index_y % 2:
-                                self.confocal_live_stacks[:, index_y, -1] = ctr_diff
-                            else:
-                                self.confocal_live_stacks[:, index_y, -1] = np.flipud(ctr_diff)
-                            self.mainexp.confocal_pl[:, index_y, 0] = np.nanmean(
-                                self.confocal_live_stacks[:, index_y, :], axis=1)
-                        # Reverse meander scan (decreasing yvals)
+                if self.mode == 0:
+                    for i, y in enumerate(self.var2):
+                        if not i % 2:
+                            xlist = np.append(xlist, self.var1)
                         else:
-                            if not index_y % 2:
-                                self.confocal_live_stacks[:, -(index_y + 1), -1] = np.flipud(ctr_diff)
-                            else:
-                                self.confocal_live_stacks[:, -(index_y + 1), -1] = ctr_diff
-                            self.mainexp.confocal_pl[:, -(index_y + 1), 0] = np.nanmean(
-                                self.confocal_live_stacks[:, -(index_y + 1), :], axis=1)
+                            xlist = np.append(xlist, np.flip(self.var1, axis=0))
 
-                        self.signal_confocal_updateplot.emit(0)
+                        ylist = np.append(ylist, np.ones(len(self.var1)) * y)
+                        # zlist = np.append(zlist, np.ones(len(self.var1)) * self.var3[0])
+
+                    if rev:
+                        xlist = np.flip(xlist, axis=0)
+                        ylist = np.flip(ylist, axis=0)
+                        # zlist = np.flip(zlist, axis=0)
+
+                    xlist = np.append(xlist, xlist[-1]) * scaleX + offsetX
+                    ylist = np.append(ylist, ylist[-1]) * scaleY + offsetY
+
+                    # zlist = np.append(zlist, zlist[-1])
+
+                    ci_task.start()
+                    ao_task.write(np.vstack((xlist,ylist)), auto_start=True)
+
+                    self.mainexp.seqapd_pl = np.array([])
+
+                    numpnts1 = len(self.var1)
+                    numpnts2 = len(self.var2)
+
+                    last_counter = ci_task.read(1)
+
+                    for index_y in range(numpnts2):
+                        if not self.cancel:
+                            # This will wait until the entire row is read
+
+                            ctr_raw = ci_task.read(numpnts1)
+                            ctr_diff = np.diff(np.append([last_counter], ctr_raw)) / self.acqtime
+
+                            last_counter = ctr_raw[-1]
+
+                            # Forward meander scan (increasing yvals)
+                            if not rev:
+                                if not index_y % 2:
+                                    self.confocal_live_stacks[:, index_y, -1] = ctr_diff
+                                else:
+                                    self.confocal_live_stacks[:, index_y, -1] = np.flipud(ctr_diff)
+                                self.mainexp.confocal_pl[:, index_y, 0] = np.nanmean(
+                                    self.confocal_live_stacks[:, index_y, :], axis=1)
+                            # Reverse meander scan (decreasing yvals)
+                            else:
+                                if not index_y % 2:
+                                    self.confocal_live_stacks[:, -(index_y + 1), -1] = np.flipud(ctr_diff)
+                                else:
+                                    self.confocal_live_stacks[:, -(index_y + 1), -1] = ctr_diff
+                                self.mainexp.confocal_pl[:, -(index_y + 1), 0] = np.nanmean(
+                                    self.confocal_live_stacks[:, -(index_y + 1), :], axis=1)
+
+                            self.signal_confocal_updateplot.emit(0)
+
+                elif self.mode == 1:
+                    for i, x in enumerate(self.var1):
+                        if not i % 2:
+                            ylist = np.append(ylist, self.var2)
+                        else:
+                            ylist = np.append(ylist, np.flip(self.var2, axis=0))
+
+                        xlist = np.append(xlist, np.ones(len(self.var2)) * x)
+                        # zlist = np.append(zlist, np.ones(len(self.var1)) * self.var3[0])
+
+                    if rev:
+                        xlist = np.flip(xlist, axis=0)
+                        ylist = np.flip(ylist, axis=0)
+                        # zlist = np.flip(zlist, axis=0)
+
+                    xlist = np.append(xlist, xlist[-1]) * scaleX + offsetX
+                    ylist = np.append(ylist, ylist[-1]) * scaleY + offsetY
+
+                    # zlist = np.append(zlist, zlist[-1])
+
+                    ci_task.start()
+                    ao_task.write(np.vstack((xlist, ylist)), auto_start=True)
+
+                    self.mainexp.seqapd_pl = np.array([])
+
+                    numpnts1 = len(self.var1)
+                    numpnts2 = len(self.var2)
+
+                    last_counter = ci_task.read(1)
+
+                    for index_x in range(numpnts1):
+                        if not self.cancel:
+                            # This will wait until the entire row is read
+
+                            ctr_raw = ci_task.read(numpnts2)
+                            ctr_diff = np.diff(np.append([last_counter], ctr_raw)) / self.acqtime
+
+                            last_counter = ctr_raw[-1]
+
+                            # Forward meander scan (increasing yvals)
+                            if not rev:
+                                if not index_x % 2:
+                                    self.confocal_live_stacks[index_x, :, -1] = ctr_diff
+                                else:
+                                    self.confocal_live_stacks[index_x, :, -1] = np.flipud(ctr_diff)
+                                self.mainexp.confocal_pl[index_x, :, 0] = np.nanmean(
+                                    self.confocal_live_stacks[index_x, :, :], axis=1)
+                            # Reverse meander scan (decreasing yvals)
+                            else:
+                                if not index_x % 2:
+                                    self.confocal_live_stacks[-(index_x + 1), :, -1] = np.flipud(ctr_diff)
+                                else:
+                                    self.confocal_live_stacks[-(index_x + 1), :, -1] = ctr_diff
+                                self.mainexp.confocal_pl[-(index_x + 1), :, 0] = np.nanmean(
+                                    self.confocal_live_stacks[-(index_x + 1), :, :], axis=1)
+
+                            self.signal_confocal_updateplot.emit(0)
 
                 if self.isRunning():
                     self.wait_for_mainexp()
@@ -268,40 +314,6 @@ class Confocal(ExpThread.ExpThread):
                      'zvals': self.mainexp.confocal_rngz}
 
         self.save_data(filename, data_dict, graph=graph, fig=fig)
-
-    def plane_fit(self):
-        """
-        a, b, c, d = planeFit(points)
-
-        return the coefficients of the plane equation ax + by + cz = d
-        from a list of three numpy vectors
-        """
-        table = self.mainexp.table_confocalZ
-        if table.rowCount() >= 3:
-            if table.rowCount() > 3:
-                self.log('More than  three points defined. Using only the first three.')
-
-            p0 = np.array([float(table.item(0, 0).text()), float(table.item(0, 1).text()), float(table.item(0, 2).text())])
-            p1 = np.array([float(table.item(1, 0).text()), float(table.item(1, 1).text()), float(table.item(1, 2).text())])
-            p2 = np.array([float(table.item(2, 0).text()), float(table.item(2, 1).text()), float(table.item(2, 2).text())])
-
-            v1 = p1 - p0
-            v2 = p2 - p0
-
-            norm = np.cross(v1, v2)
-
-            a = norm[0]
-            b = norm[1]
-            c = norm[2]
-
-            d = a * p0[0] + b * p0[1] + c * p0[2]
-
-            self.plane_coef = [a, b, c, d]
-            self.mainexp.label_confocalZ_eq.setText('z = %.3f + %.3fx + %.3fy' % (d / c, -a / c, -b / c))
-
-    def calcZ(self, x, y):
-        [a, b, c, d] = self.plane_coef
-        return (d - a*x - b*y)/c
 
     def run(self):
         self.cancel = False
