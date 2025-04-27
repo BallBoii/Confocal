@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>QLAB Confocal</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QDoubleSpinBox" name="dbl_confocal_z_stop">
