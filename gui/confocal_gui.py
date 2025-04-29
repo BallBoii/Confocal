@@ -1,4 +1,8 @@
 from PyQt6 import QtGui, QtCore, QtWidgets, uic
+from PyQt6.QtGui import QImage, QPixmap
+from PyQt6.QtCore import QThread, pyqtSignal as Signal, pyqtSlot as Slot
+import cv2, imutils
+import sys
 
 # system imports
 import sys, os, scipy.io, warnings, functools
@@ -135,12 +139,19 @@ class MainWindow(QtWidgets.QMainWindow):
         self.btn_map_select.clicked.connect(self.map_select)
         self.btn_map_start_roi.clicked.connect(self.map_start_roi)
         self.btn_map_home.clicked.connect(self.tracker_home)
+        self.chkbx_map_autolevel.setChecked(True)
+        self.chkbx_map_autolevel.stateChanged.connect(self.map_set_autolevel)
+        self.btn_map_camera.clicked.connect(self.map_camera_start)
 
         self.map_data = np.array([])
         self.map_ax_xmin = 0
         self.map_ax_xmax = 0
         self.map_ax_ymin = 0
         self.map_ax_ymax = 0
+
+        '''Camera Thread'''
+        self.thread_camera = CameraThread(self)
+        self.thread_camera.frame_signal.connect(self.map_set_camera_image)
 
         '''LIVE APD'''
         self.btn_liveapd_clear.clicked.connect(self.liveapd_clear)
@@ -394,6 +405,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.map_data = self.confocal_pl[:, :, 0]
 
         self.linein_map.setText(self.label_filename.text())
+        self.chkbx_map_autolevel.setChecked(True)
         self.map_updateplot()
 
     def map_select(self, checked):
@@ -457,6 +469,18 @@ class MainWindow(QtWidgets.QMainWindow):
             self.plt_map.scene().sigMouseClicked.disconnect()
         except TypeError:
             pass
+
+    def map_set_autolevel(self, b):
+        self.hlw_map.item.autoLevel = bool(b)
+
+    def map_camera_start(self):
+        self.chkbx_map_autolevel.setChecked(True)
+        self.thread_camera.start()
+    def map_set_camera_image(self, image):
+        xscale = 1000/128/50
+        yscale = 1000/128/75
+        self.qtimg_map.setImage(image)
+        self.qtimg_map.setRect(-320*xscale, -240*yscale, 640*xscale, 480*yscale)
 
     def tracker_drive(self):
         xpos = self.dbl_tracker_xpos.value()
@@ -584,6 +608,24 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def log_clear(self):
         pass
+
+
+class CameraThread(QThread):
+    frame_signal = Signal(np.ndarray)
+
+    def __init__(self, mainexp):
+        super().__init__()
+        self.mainexp = mainexp
+    def run(self):
+        self.cap = cv2.VideoCapture(0)
+        while self.cap.isOpened() and self.mainexp.btn_map_camera.isChecked():
+            try:
+                _, frame = self.cap.read()
+                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                self.frame_signal.emit(cv2.transpose(cv2.flip(frame, 0))) # transpose and flip to plot on normal coordinates
+            except cv2.error:
+                print('Camera Error!')
+                break
 
 def processEvents():
     QtWidgets.QApplication.processEvents()
