@@ -1,8 +1,7 @@
-from PyQt6 import QtGui, QtCore, QtWidgets, uic
-from PyQt6.QtGui import QImage, QPixmap
-from PyQt6.QtCore import QThread, pyqtSignal as Signal, pyqtSlot as Slot
-import cv2, imutils
-import sys
+from PyQt6 import QtCore, QtWidgets, uic
+from PyQt6.QtCore import QThread, pyqtSignal as Signal
+import cv2
+from cv2_enumerate_cameras import enumerate_cameras
 
 # system imports
 import sys, os, scipy.io, warnings, functools
@@ -150,6 +149,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.map_ax_ymax = 0
 
         '''Camera Thread'''
+        self.cbox_camera_list.addItems([str(cam).rsplit(' ', 1)[0] for cam in enumerate_cameras(cv2.CAP_MSMF)])
         self.thread_camera = CameraThread(self)
         self.thread_camera.frame_signal.connect(self.map_set_camera_image)
 
@@ -617,7 +617,7 @@ class CameraThread(QThread):
         super().__init__()
         self.mainexp = mainexp
     def run(self):
-        self.cap = cv2.VideoCapture(0)
+        self.cap = cv2.VideoCapture(int(self.mainexp.cbox_camera_list.currentText().split(':', 1)[0]))
         while self.cap.isOpened() and self.mainexp.btn_map_camera.isChecked():
             try:
                 _, frame = self.cap.read()
