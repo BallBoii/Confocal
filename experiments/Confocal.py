@@ -221,17 +221,13 @@ class Confocal(ExpThread.ExpThread):
                             ylist = np.append(ylist, np.flip(self.var2, axis=0))
 
                         xlist = np.append(xlist, np.ones(len(self.var2)) * x)
-                        # zlist = np.append(zlist, np.ones(len(self.var1)) * self.var3[0])
 
                     if rev:
                         xlist = np.flip(xlist, axis=0)
                         ylist = np.flip(ylist, axis=0)
-                        # zlist = np.flip(zlist, axis=0)
 
-                    xlist = np.append(xlist, xlist[-1]) * scaleX + offsetX
-                    ylist = np.append(ylist, ylist[-1]) * scaleY + offsetY
-
-                    # zlist = np.append(zlist, zlist[-1])
+                    xlist = np.append(xlist, xlist[-1]) * self.galvos['scaleX'] + self.galvos['offsetX']
+                    ylist = np.append(ylist, ylist[-1]) * self.galvos['scaleY'] + self.galvos['offsetY']
 
                     ci_task.start()
                     ao_task.write(np.vstack((xlist, ylist)), auto_start=True)

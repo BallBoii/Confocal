@@ -19,7 +19,7 @@
      <rect>
       <x>510</x>
       <y>710</y>
-      <width>71</width>
+      <width>91</width>
       <height>22</height>
      </rect>
     </property>
@@ -84,7 +84,7 @@
      <rect>
       <x>510</x>
       <y>730</y>
-      <width>71</width>
+      <width>91</width>
       <height>22</height>
      </rect>
     </property>
@@ -136,7 +136,7 @@
      <rect>
       <x>510</x>
       <y>690</y>
-      <width>71</width>
+      <width>91</width>
       <height>22</height>
      </rect>
     </property>
@@ -901,7 +901,7 @@
      <x>0</x>
      <y>0</y>
      <width>1619</width>
-     <height>21</height>
+     <height>22</height>
     </rect>
    </property>
   </widget>
@@ -914,6 +914,54 @@
    <header>pyqtgraph.h</header>
   </customwidget>
  </customwidgets>
+ <tabstops>
+  <tabstop>linein_sample_name</tabstop>
+  <tabstop>chkbx_autosave</tabstop>
+  <tabstop>dbl_confocal_acqtime</tabstop>
+  <tabstop>int_confocal_live_avg</tabstop>
+  <tabstop>btn_confocal_start</tabstop>
+  <tabstop>btn_confocal_stop</tabstop>
+  <tabstop>btn_confocal_live</tabstop>
+  <tabstop>btn_confocal_save</tabstop>
+  <tabstop>btn_confocal_acqtime_dec</tabstop>
+  <tabstop>btn_confocal_acqtime_inc</tabstop>
+  <tabstop>dbl_confocal_x_start</tabstop>
+  <tabstop>dbl_confocal_x_stop</tabstop>
+  <tabstop>int_confocal_x_numdivs</tabstop>
+  <tabstop>dbl_confocal_y_start</tabstop>
+  <tabstop>dbl_confocal_y_stop</tabstop>
+  <tabstop>int_confocal_y_numdivs</tabstop>
+  <tabstop>btn_confocal_pxsync</tabstop>
+  <tabstop>dbl_confocal_z_start</tabstop>
+  <tabstop>dbl_confocal_z_stop</tabstop>
+  <tabstop>int_confocal_z_numdivs</tabstop>
+  <tabstop>btn_confocal_start_roi</tabstop>
+  <tabstop>btn_confocal_roi_undo</tabstop>
+  <tabstop>btn_confocal_start_preset1</tabstop>
+  <tabstop>btn_confocal_start_preset2</tabstop>
+  <tabstop>dbl_confocal_preset1</tabstop>
+  <tabstop>dbl_confocal_preset2</tabstop>
+  <tabstop>chkbx_confocal_autolevel</tabstop>
+  <tabstop>btn_confocal_mode_xy</tabstop>
+  <tabstop>btn_confocal_mode_yx</tabstop>
+  <tabstop>cbox_camera_list</tabstop>
+  <tabstop>btn_map_camera</tabstop>
+  <tabstop>btn_map_start_roi</tabstop>
+  <tabstop>btn_map_load</tabstop>
+  <tabstop>btn_map_copy</tabstop>
+  <tabstop>btn_map_select</tabstop>
+  <tabstop>dbl_tracker_xpos</tabstop>
+  <tabstop>dbl_tracker_ypos</tabstop>
+  <tabstop>dbl_tracker_zpos</tabstop>
+  <tabstop>cbox_zpos_stepsize</tabstop>
+  <tabstop>btn_map_home</tabstop>
+  <tabstop>chkbx_map_autolevel</tabstop>
+  <tabstop>glw_liveapd</tabstop>
+  <tabstop>dbl_liveapd_acqtime</tabstop>
+  <tabstop>btn_liveapd_start</tabstop>
+  <tabstop>btn_liveapd_stop</tabstop>
+  <tabstop>btn_liveapd_clear</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>
