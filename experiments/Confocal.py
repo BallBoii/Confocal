@@ -23,13 +23,11 @@ class Confocal(ExpThread.ExpThread):
 
         self.mode = 0  # scanning mode (0: XY, 1: XZ, 2: YZ)
 
-        self.var1_id = 0  # x-axis
-        self.var2_id = 1  # y-axis
-        self.var3_id = 2  # z-axis
-
         self.var1 = []
         self.var2 = []
         self.var3 = []
+
+        self.sweep_rev = False
 
         self.isLive = False
         self.confocal_live_stacks = []
@@ -69,10 +67,6 @@ class Confocal(ExpThread.ExpThread):
 
     def prepsweep(self):
         mainexp = self.mainexp
-
-        self.var1_id = 0
-        self.var2_id = 1
-        self.var3_id = 2
 
         self.var1 = np.linspace(mainexp.dbl_confocal_x_start.value(), mainexp.dbl_confocal_x_stop.value(),
                                 mainexp.int_confocal_x_numdivs.value() + 1)
@@ -114,7 +108,20 @@ class Confocal(ExpThread.ExpThread):
             ao_task.write([vx, vy])
 
     def sweep(self):
-        rev = False
+        self.sweep_rev = False
+
+        # todo: LIVE and z-stack are not compatible (duh!). Need to prevent running by accident.
+        # Regular Scan. No Z-Stack.
+        if len(self.var3) == 0:
+            self.sweep_multiple_frames()
+        # Z-Stack
+        else:
+            for zindex, z in enumerate(self.var3):
+                self.mainexp.piezo.SetPosition(z)
+                time.sleep(0.1) # PFM450E settling time rated for 25ms
+                self.sweep_multiple_frames(zindex)
+
+    def sweep_multiple_frames(self, zindex=0):
         exit_loop = False
 
         while not exit_loop:
@@ -127,8 +134,8 @@ class Confocal(ExpThread.ExpThread):
             if self.confocal_live_stacks.shape[2] > self.confocal_live_avg:
                 self.confocal_live_stacks = self.confocal_live_stacks[:, :, -self.confocal_live_avg:]
 
-            self.sweep_single_frame(rev=rev)
-            rev = ~rev
+            self.sweep_single_frame(zindex)
+            self.sweep_rev = not self.sweep_rev
 
             if self.cancel:
                 exit_loop = True
@@ -139,7 +146,7 @@ class Confocal(ExpThread.ExpThread):
                     exit_loop = not self.mainexp.btn_confocal_live.isChecked() and \
                                 np.atleast_3d(self.confocal_live_stacks).shape[2] == self.confocal_live_avg
 
-    def sweep_single_frame(self, rev=False):
+    def sweep_single_frame(self, zindex=0):
         rate = 1/self.acqtime
 
         if not self.cancel:
@@ -166,7 +173,7 @@ class Confocal(ExpThread.ExpThread):
 
                         ylist = np.append(ylist, np.ones(len(self.var1)) * y)
 
-                    if rev:
+                    if self.sweep_rev:
                         xlist = np.flip(xlist, axis=0)
                         ylist = np.flip(ylist, axis=0)
 
@@ -195,12 +202,12 @@ class Confocal(ExpThread.ExpThread):
                             last_counter = ctr_raw[-1]
 
                             # Forward meander scan (increasing yvals)
-                            if not rev:
+                            if not self.sweep_rev:
                                 if not index_y % 2:
                                     self.confocal_live_stacks[:, index_y, -1] = ctr_diff
                                 else:
                                     self.confocal_live_stacks[:, index_y, -1] = np.flipud(ctr_diff)
-                                self.mainexp.confocal_pl[:, index_y, 0] = np.nanmean(
+                                self.mainexp.confocal_pl[:, index_y, zindex] = np.nanmean(
                                     self.confocal_live_stacks[:, index_y, :], axis=1)
                             # Reverse meander scan (decreasing yvals)
                             else:
@@ -208,10 +215,10 @@ class Confocal(ExpThread.ExpThread):
                                     self.confocal_live_stacks[:, -(index_y + 1), -1] = np.flipud(ctr_diff)
                                 else:
                                     self.confocal_live_stacks[:, -(index_y + 1), -1] = ctr_diff
-                                self.mainexp.confocal_pl[:, -(index_y + 1), 0] = np.nanmean(
+                                self.mainexp.confocal_pl[:, -(index_y + 1), zindex] = np.nanmean(
                                     self.confocal_live_stacks[:, -(index_y + 1), :], axis=1)
 
-                            self.signal_confocal_updateplot.emit(0)
+                            self.signal_confocal_updateplot.emit(zindex)
 
                 elif self.mode == 1:
                     for i, x in enumerate(self.var1):
@@ -222,7 +229,7 @@ class Confocal(ExpThread.ExpThread):
 
                         xlist = np.append(xlist, np.ones(len(self.var2)) * x)
 
-                    if rev:
+                    if self.sweep_rev:
                         xlist = np.flip(xlist, axis=0)
                         ylist = np.flip(ylist, axis=0)
 
@@ -249,12 +256,12 @@ class Confocal(ExpThread.ExpThread):
                             last_counter = ctr_raw[-1]
 
                             # Forward meander scan (increasing yvals)
-                            if not rev:
+                            if not self.sweep_rev:
                                 if not index_x % 2:
                                     self.confocal_live_stacks[index_x, :, -1] = ctr_diff
                                 else:
                                     self.confocal_live_stacks[index_x, :, -1] = np.flipud(ctr_diff)
-                                self.mainexp.confocal_pl[index_x, :, 0] = np.nanmean(
+                                self.mainexp.confocal_pl[index_x, :, zindex] = np.nanmean(
                                     self.confocal_live_stacks[index_x, :, :], axis=1)
                             # Reverse meander scan (decreasing yvals)
                             else:
@@ -262,10 +269,10 @@ class Confocal(ExpThread.ExpThread):
                                     self.confocal_live_stacks[-(index_x + 1), :, -1] = np.flipud(ctr_diff)
                                 else:
                                     self.confocal_live_stacks[-(index_x + 1), :, -1] = ctr_diff
-                                self.mainexp.confocal_pl[-(index_x + 1), :, 0] = np.nanmean(
+                                self.mainexp.confocal_pl[-(index_x + 1), :, zindex] = np.nanmean(
                                     self.confocal_live_stacks[-(index_x + 1), :, :], axis=1)
 
-                            self.signal_confocal_updateplot.emit(0)
+                            self.signal_confocal_updateplot.emit(zindex)
 
                 if self.isRunning():
                     self.wait_for_mainexp()
