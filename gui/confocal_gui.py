@@ -8,6 +8,18 @@ import sys, os, scipy.io, warnings, functools
 import pyqtgraph as pg
 import numpy as np
 
+# Thorlabs APT Imports
+import clr, time
+clr.AddReference("C:\\Program Files\\Thorlabs\\Kinesis\\Thorlabs.MotionControl.DeviceManagerCLI.dll")
+clr.AddReference("C:\\Program Files\\Thorlabs\\Kinesis\\Thorlabs.MotionControl.GenericPiezoCLI.dll")
+clr.AddReference("C:\\Program Files\\Thorlabs\\Kinesis\\ThorLabs.MotionControl.Benchtop.PrecisionPiezoCLI.dll")
+
+from Thorlabs.MotionControl.DeviceManagerCLI import *
+from Thorlabs.MotionControl.GenericPiezoCLI import *
+from Thorlabs.MotionControl.GenericPiezoCLI import Piezo
+from Thorlabs.MotionControl.Benchtop.PrecisionPiezoCLI import *
+from System import Decimal  # necessary for real world units
+
 # user-defined imports
 import file_utils
 import experiments as exp
@@ -127,6 +139,42 @@ class MainWindow(QtWidgets.QMainWindow):
         self.map_nvlist = pg.ScatterPlotItem(pen=pg.mkPen((0, 150, 100), width=2), brush=None, symbol='o', size=7)
         self.map_nvlist.setData([], [])
         self.map_nvlabels = [] # for storing NV numbers
+
+        '''PIEZO CONTROL'''
+        # todo: clean up and organize
+        self.cbox_zpos_stepsize.addItems(['Z: 10 μm', 'Z:  1 μm', 'Z: 0.1 μm'])
+        self.cbox_zpos_stepsize.currentTextChanged.connect(self.set_zpos_stepsize)
+        self.dbl_tracker_zpos.valueChanged.connect(self.tracker_set_zpos)
+
+        try:
+            DeviceManagerCLI.BuildDeviceList()
+            serial_no = "44506394"
+
+            # Connect, begin polling, and enable
+            self.piezo = BenchtopPrecisionPiezo.CreateBenchtopPiezo(serial_no)
+            self.piezo.Connect(serial_no)
+
+            # Because this is a benchtop controller we need a channel object
+            self.piezo_channel = self.piezo.GetChannel(1)
+
+            # Ensure that the device settings have been initialized
+            if not self.piezo_channel.IsSettingsInitialized():
+                self.piezo_channel.WaitForSettingsInitialized(10000)  # 10 second timeout
+                assert self.piezo_channel.IsSettingsInitialized() is True
+
+            # Start polling and enable
+            self.piezo_channel.StartPolling(250)  # 250ms polling rate
+            time.sleep(0.25)
+            self.piezo_channel.EnableDevice()
+            time.sleep(0.25)  # Wait for device to enable
+
+            # Get Device Information and display description
+            device_info = self.piezo_channel.GetDeviceInfo()
+            self.piezo_channel.SetPosition(Decimal(0.0))
+
+        except:
+            print('Piezo Controller not connected.')
+            self.piezo_channel = None
 
         self.plt_map.addItem(self.map_nvlist)
         self.plt_map.addItem(self.map_cursor)
@@ -497,6 +545,15 @@ class MainWindow(QtWidgets.QMainWindow):
         self.dbl_tracker_zpos.setValue(5)
         self.tracker_drive()
 
+    def tracker_set_zpos(self, value):
+        if self.piezo_channel:
+            position = Decimal(value)
+            self.piezo_channel.SetPosition(position)
+
+    def set_zpos_stepsize(self, value):
+        stepsize = float(value.split()[1])
+        self.dbl_tracker_zpos.setSingleStep(stepsize)
+
     def liveapd_start(self):
         self.thread_liveapd.start()
 
@@ -601,6 +658,8 @@ class MainWindow(QtWidgets.QMainWindow):
             self.confocal_zstack_enable(bool(self.int_confocal_z_numdivs.value()) and bool_set)
 
     def closeEvent(self, *args, **kwargs):
+        self.piezo_channel.StopPolling()
+        self.piezo_channel.Disconnect()
         self.export_gui_settings()
 
     def log(self, text):

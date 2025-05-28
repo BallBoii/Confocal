@@ -683,6 +683,9 @@
       <height>23</height>
      </rect>
     </property>
+    <property name="keyboardTracking">
+     <bool>false</bool>
+    </property>
    </widget>
    <widget class="QDoubleSpinBox" name="dbl_tracker_xpos">
     <property name="geometry">
@@ -692,6 +695,9 @@
       <width>81</width>
       <height>23</height>
      </rect>
+    </property>
+    <property name="keyboardTracking">
+     <bool>false</bool>
     </property>
    </widget>
    <widget class="QLabel" name="label_tracker_y">
@@ -719,21 +725,8 @@
       <height>23</height>
      </rect>
     </property>
-   </widget>
-   <widget class="QLabel" name="label_tracker_z">
-    <property name="geometry">
-     <rect>
-      <x>1460</x>
-      <y>32</y>
-      <width>47</width>
-      <height>16</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>z (μm)</string>
-    </property>
-    <property name="alignment">
-     <set>Qt::AlignCenter</set>
+    <property name="keyboardTracking">
+     <bool>false</bool>
     </property>
    </widget>
    <widget class="QLabel" name="label_tracker_x">
@@ -891,6 +884,16 @@
      </rect>
     </property>
    </widget>
+   <widget class="QComboBox" name="cbox_zpos_stepsize">
+    <property name="geometry">
+     <rect>
+      <x>1450</x>
+      <y>30</y>
+      <width>81</width>
+      <height>22</height>
+     </rect>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
@@ -898,7 +901,7 @@
      <x>0</x>
      <y>0</y>
      <width>1619</width>
-     <height>22</height>
+     <height>21</height>
     </rect>
    </property>
   </widget>
