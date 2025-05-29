@@ -18,7 +18,7 @@ class PFM450E:
         self.current_pos = 0.0
 
         try:
-            self.device = BenchtopPrecisionPiezo.CreateBenchtopPiezo(serial_no)
+            self.device = BenchtopPrecisionPiezo.CreateBenchtopPiezo(serialNumber)
             self.device.Connect(serialNumber)
 
             # Because this is a benchtop controller we need a channel object
