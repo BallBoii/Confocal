@@ -14,7 +14,7 @@ class Confocal(ExpThread.ExpThread):
     signal_confocal_grab_screenshots = pyqtSignal()
 
     signal_confocal_initplot = pyqtSignal()
-    signal_confocal_updateplot = pyqtSignal(int)
+    signal_confocal_updateplot = pyqtSignal(int, int)
 
     def __init__(self, mainexp, wait_condition):
         super().__init__(mainexp, wait_condition)
@@ -92,8 +92,18 @@ class Confocal(ExpThread.ExpThread):
         self.mainexp.confocal_pl[:][:][:] = np.NaN
         self.confocal_live_stacks = np.array([])
 
+        if self.mode == 0: # Horizontal Scans
+            self.mainexp.confocal_scanLine = self.mainexp.confocal_hLine
+        elif self.mode == 1: # Vertical Scans
+            self.mainexp.confocal_scanLine = self.mainexp.confocal_vLine
+        else:
+            print(f'Mode {self.mode} not implemented')
+
         self.signal_confocal_initplot.emit()
-        self.signal_confocal_updateplot.emit(0)
+        self.signal_confocal_updateplot.emit(0, 0)
+
+        if self.isLive:
+            self.mainexp.confocal_scanLine.show()
 
         if self.isRunning():
             self.wait_for_mainexp()
@@ -209,6 +219,7 @@ class Confocal(ExpThread.ExpThread):
                                     self.confocal_live_stacks[:, index_y, -1] = np.flipud(ctr_diff)
                                 self.mainexp.confocal_pl[:, index_y, zindex] = np.nanmean(
                                     self.confocal_live_stacks[:, index_y, :], axis=1)
+                                sindex = index_y # todo: condensed this big if-else to one and substitute sindex (no time to test at time of writing)
                             # Reverse meander scan (decreasing yvals)
                             else:
                                 if not index_y % 2:
@@ -217,8 +228,9 @@ class Confocal(ExpThread.ExpThread):
                                     self.confocal_live_stacks[:, -(index_y + 1), -1] = ctr_diff
                                 self.mainexp.confocal_pl[:, -(index_y + 1), zindex] = np.nanmean(
                                     self.confocal_live_stacks[:, -(index_y + 1), :], axis=1)
+                                sindex = numpnts2 - (index_y + 1)
 
-                            self.signal_confocal_updateplot.emit(zindex)
+                            self.signal_confocal_updateplot.emit(zindex, sindex)
 
                 elif self.mode == 1:
                     for i, x in enumerate(self.var1):
@@ -263,6 +275,7 @@ class Confocal(ExpThread.ExpThread):
                                     self.confocal_live_stacks[index_x, :, -1] = np.flipud(ctr_diff)
                                 self.mainexp.confocal_pl[index_x, :, zindex] = np.nanmean(
                                     self.confocal_live_stacks[index_x, :, :], axis=1)
+                                sindex = index_x
                             # Reverse meander scan (decreasing yvals)
                             else:
                                 if not index_x % 2:
@@ -271,9 +284,11 @@ class Confocal(ExpThread.ExpThread):
                                     self.confocal_live_stacks[-(index_x + 1), :, -1] = ctr_diff
                                 self.mainexp.confocal_pl[-(index_x + 1), :, zindex] = np.nanmean(
                                     self.confocal_live_stacks[-(index_x + 1), :, :], axis=1)
+                                sindex = -(index_x + 1)
 
-                            self.signal_confocal_updateplot.emit(zindex)
-
+                            self.signal_confocal_updateplot.emit(zindex, sindex) # todo: vline not implemented
+                else:
+                    print(f'Mode {self.mode} not implemented')
                 if self.isRunning():
                     self.wait_for_mainexp()
 
@@ -282,6 +297,7 @@ class Confocal(ExpThread.ExpThread):
             self.save()
             self.mainexp.datasaved = True
 
+        self.mainexp.confocal_scanLine.hide()
         self.mainexp.set_gui_btn_enable('all', True)
         self.mainexp.set_gui_input_enable('confocal', True)
         self.mainexp.btn_confocal_stop.setEnabled(False)

@@ -38,7 +38,8 @@ class MainWindow(QtWidgets.QMainWindow):
         # pg.setConfigOption('foreground', 'k')
 
 
-        self.setFixedSize(self.size())
+        # self.setFixedSize(self.size())
+        self.showMaximized()
 
         # this will ensure that the application quits at the right time,
         # and that Qt has a chance to automatically delete all the children of the top-level window
@@ -105,6 +106,15 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.grid_confocal.addWidget(self.glw_confocal, 0, 0)
         self.grid_confocal.addWidget(self.hlw_confocal, 0, 1)
+
+        self.confocal_vLine = pg.InfiniteLine(angle=90, movable=False, pen=(0, 150, 100))
+        self.confocal_hLine = pg.InfiniteLine(angle=0, movable=False, pen=(0, 150, 100))
+        self.confocal_vLine.hide()
+        self.confocal_hLine.hide()
+        self.confocal_scanLine = None # handle for hLine or vLine during live scans
+
+        self.plt_confocal.addItem(self.confocal_vLine, ignoreBounds=True)
+        self.plt_confocal.addItem(self.confocal_hLine, ignoreBounds=True)
 
         self.int_confocal_z_numdivs.valueChanged.connect(self.confocal_zstack_enable)
         self.confocal_zstack_enable(self.int_confocal_z_numdivs.value())
@@ -343,12 +353,15 @@ class MainWindow(QtWidgets.QMainWindow):
             start_y = self.confocal_rngy[0]
             stop_y = self.confocal_rngy[-1]
 
+            px = (stop_x - start_x) / (len(self.confocal_rngx)-1)
+            py = (stop_y - start_y) / (len(self.confocal_rngy)-1)
+
             self.qtimg_confocal.setImage(self.confocal_pl[:, :, 0])
 
             for name in ['confocal']:
                 qtimg = getattr(self, 'qtimg_%s' % name)
                 qtimg.resetTransform()  # need to call this. otherwise pos and scale are relative to previous
-                qtimg.setRect(start_x, start_y, (stop_x - start_x), (stop_y - start_y))
+                qtimg.setRect(start_x-px/2, start_y-py/2, (stop_x - start_x)+px, (stop_y - start_y)+py)
 
             if self.confocal_mode == 0:
                 self.plt_confocal.setLabels(bottom='xpos (&mu;m)', left='ypos (&mu;m)')
@@ -359,13 +372,13 @@ class MainWindow(QtWidgets.QMainWindow):
 
             processEvents()
 
-    def confocal_updateplot(self, zindex=0):
+    def confocal_updateplot(self, zindex=0, sindex=0):
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore', r'All-NaN (slice|axis) encountered')
 
             self.qtimg_confocal.setImage(self.confocal_pl[:, :, zindex])
             # self.hlw_confocal.setImageItem(self.qtimg_confocal)
-
+            self.confocal_scanLine.setPos(self.confocal_rngy[sindex])
             if self.confocal_mode == 0:
                 filename = 'IMG_%04d' % self.wavenum
 
@@ -429,9 +442,11 @@ class MainWindow(QtWidgets.QMainWindow):
             warnings.simplefilter('ignore', RuntimeWarning)  # for ignoring warnings when plotting NaNs
 
             if len(self.map_data) > 0:
+                px = (self.map_ax_xmax - self.map_ax_xmin) / (self.map_data.shape[0] - 1)
+                py = (self.map_ax_ymax - self.map_ax_ymin) / (self.map_data.shape[1] - 1)
                 self.qtimg_map.setImage(self.map_data)
                 self.qtimg_map.resetTransform()
-                self.qtimg_map.setRect(self.map_ax_xmin, self.map_ax_ymin, (self.map_ax_xmax - self.map_ax_xmin), (self.map_ax_ymax - self.map_ax_ymin))
+                self.qtimg_map.setRect(self.map_ax_xmin-px/2, self.map_ax_ymin-py/2, (self.map_ax_xmax - self.map_ax_xmin)+px, (self.map_ax_ymax - self.map_ax_ymin)+py)
 
                 # self.hlw_map.setImageItem(self.qtimg_map)
 
@@ -504,7 +519,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def tracker_home(self):
         self.dbl_tracker_xpos.setValue(0)
         self.dbl_tracker_ypos.setValue(0)
-        self.dbl_tracker_zpos.setValue(5)
+        # self.dbl_tracker_zpos.setValue(5)
         self.tracker_drive()
 
     def set_zpos_stepsize(self, value):
