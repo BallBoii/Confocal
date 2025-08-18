@@ -379,11 +379,10 @@ class MainWindow(QtWidgets.QMainWindow):
             self.qtimg_confocal.setImage(self.confocal_pl[:, :, zindex])
             # self.hlw_confocal.setImageItem(self.qtimg_confocal)
             self.confocal_scanLine.setPos(self.confocal_rngy[sindex])
-            if self.confocal_mode == 0:
-                filename = 'IMG_%04d' % self.wavenum
+            filename = 'IMG_%04d' % self.wavenum
 
-                self.plt_confocal.setTitle('%s: Z = %.2f' % (filename, self.confocal_rngz[zindex]))
-                self.label_filename.setText(filename)
+            self.plt_confocal.setTitle('%s: Z = %.2f' % (filename, self.confocal_rngz[zindex]))
+            self.label_filename.setText(filename)
 
     def confocal_set_autolevel(self, b):
         self.hlw_confocal.item.autoLevel = bool(b)
