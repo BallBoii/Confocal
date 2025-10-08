@@ -113,7 +113,7 @@ class Confocal(ExpThread.ExpThread):
         vy = y * self.galvos['scaleY'] + self.galvos['offsetY']
 
         with nidaqmx.Task('Galvos') as ao_task:
-            ao_task.ao_channels.add_ao_voltage_chan(f'{self.galvos['aoX']},{self.galvos['aoY']}')
+            ao_task.ao_channels.add_ao_voltage_chan(f"{self.galvos['aoX']},{self.galvos['aoY']}")
 
             ao_task.write([vx, vy])
 
@@ -162,10 +162,10 @@ class Confocal(ExpThread.ExpThread):
         if not self.cancel:
             with (nidaqmx.Task('Galvo') as ao_task, nidaqmx.Task('Counter') as ci_task):
 
-                ao_task.ao_channels.add_ao_voltage_chan(f'{self.galvos['aoX']},{self.galvos['aoY']}')
+                ao_task.ao_channels.add_ao_voltage_chan(f"{self.galvos['aoX']},{self.galvos['aoY']}")
                 ao_task.timing.cfg_samp_clk_timing(rate, source='', samps_per_chan=len(self.var1)*len(self.var2) + 1)
 
-                ci_task.ci_channels.add_ci_count_edges_chan(f'{self.ctrapd['dev']}')
+                ci_task.ci_channels.add_ci_count_edges_chan(f"{self.ctrapd['dev']}")
                 ci_task.timing.cfg_samp_clk_timing(rate, source='ao/SampleClock', samps_per_chan=len(self.var1)*len(self.var2) + 1)
                 ci_task.triggers.arm_start_trigger.dig_edge_src = 'ao/StartTrigger'
                 ci_task.ci_channels[0].ci_count_edges_term = self.ctrapd['addr_src']
