@@ -33,7 +33,8 @@ class LiveAPD(ExpThread.ExpThread):
 
         with nidaqmx.Task('counter') as ci_task, nidaqmx.Task('clock') as clk_task:
             ci_task.ci_channels.add_ci_count_edges_chan(self.ctrapd['dev'])
-            ci_task.ci_channels[0].ci_count_edges_term = self.ctrapd['addr_src']
+            if not self.ctrapd['addr_src'].endswith('Source'):
+                ci_task.ci_channels[0].ci_count_edges_term = self.ctrapd['addr_src']
             ci_task.timing.cfg_samp_clk_timing(1, source=self.ctrclk['addr_out'])
 
             clk_task.co_channels.add_co_pulse_chan_freq(self.ctrclk['dev'])

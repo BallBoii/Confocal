@@ -89,7 +89,7 @@ class Confocal(ExpThread.ExpThread):
 
     def initplots(self):
         self.mainexp.confocal_pl = np.empty((self.var1.size, self.var2.size, self.var3.size))
-        self.mainexp.confocal_pl[:][:][:] = np.NaN
+        self.mainexp.confocal_pl[:][:][:] = np.nan
         self.confocal_live_stacks = np.array([])
 
         if self.mode == 0: # Horizontal Scans
@@ -140,7 +140,7 @@ class Confocal(ExpThread.ExpThread):
                                                       np.empty((self.var1.size, self.var2.size, 1)), axis=2)
             else:
                 self.confocal_live_stacks = np.empty((self.var1.size, self.var2.size, 1))
-            self.confocal_live_stacks[:][:][-1] = np.NaN
+            self.confocal_live_stacks[:][:][-1] = np.nan
             if self.confocal_live_stacks.shape[2] > self.confocal_live_avg:
                 self.confocal_live_stacks = self.confocal_live_stacks[:, :, -self.confocal_live_avg:]
 
@@ -166,9 +166,10 @@ class Confocal(ExpThread.ExpThread):
                 ao_task.timing.cfg_samp_clk_timing(rate, source='', samps_per_chan=len(self.var1)*len(self.var2) + 1)
 
                 ci_task.ci_channels.add_ci_count_edges_chan(f"{self.ctrapd['dev']}")
-                ci_task.timing.cfg_samp_clk_timing(rate, source='ao/SampleClock', samps_per_chan=len(self.var1)*len(self.var2) + 1)
-                ci_task.triggers.arm_start_trigger.dig_edge_src = 'ao/StartTrigger'
-                ci_task.ci_channels[0].ci_count_edges_term = self.ctrapd['addr_src']
+                ci_task.timing.cfg_samp_clk_timing(rate, source='/Dev1-AnalogOut/ao/SampleClock', samps_per_chan=len(self.var1)*len(self.var2) + 1)
+                ci_task.triggers.arm_start_trigger.dig_edge_src = '/Dev1-AnalogOut/ao/StartTrigger'
+                if not self.ctrapd['addr_src'].endswith('Source'):
+                    ci_task.ci_channels[0].ci_count_edges_term = self.ctrapd['addr_src']
 
                 # Build a sweep list
                 xlist = np.array([])
