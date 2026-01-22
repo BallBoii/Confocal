@@ -16,7 +16,6 @@ import instruments
 # import UI files
 import mainexp_widgets
 
-
 def my_excepthook(type, value, tback):
     sys.__excepthook__(type, value, tback)
 
@@ -160,7 +159,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.map_ax_ymax = 0
 
         '''PIEZO CONTROL'''
-        serial_no = "44506394"
+        serial_no = "44533394"
         self.piezo = instruments.ThorlabsPiezo.PFM450E(serial_no)
         self.piezo.SetPosition(0.0)
 
@@ -184,6 +183,17 @@ class MainWindow(QtWidgets.QMainWindow):
         self.curve_liveapd = self.plt_liveapd.plot(pen='r')
         self.liveapd_pl = np.array([])
         self.liveapd_t = np.array([])
+
+        '''Focus calibration'''
+        self.plt_focus = self.glw_best_focus.addPlot()
+        self.plt_focus.setLabels(left='PL (Hz)', bottom='Z distance (um)')
+        self.curve_focus = self.plt_focus.plot(pen='r')
+        self.curve_fit_focus = self.plt_focus.plot(pen='w')
+        self.focus_pl = np.array([])
+        self.focus_fit_pl = np.array([])
+        self.focus_t = np.array([])
+
+        # self.thread_confocal.isFinished()
 
         '''SET UP ALL GUI'''
         # Set up ranges and step limits in the gui fields
@@ -244,6 +254,12 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.confocal_settings_store()
         self.thread_confocal.start()
+        # if self.thread_confocal.isFinished() == True:
+        #     print(1)
+        #     pass
+        # else:
+        #     print(2)
+        #     self.best_z_distance()
 
     def confocal_get_settings(self):
         xmin = self.dbl_confocal_x_start.value()
@@ -344,6 +360,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def confocal_stop(self):
         self.thread_confocal.cancel = True
+
 
     def confocal_initplot(self):
         with warnings.catch_warnings():
@@ -542,10 +559,23 @@ class MainWindow(QtWidgets.QMainWindow):
         self.curve_liveapd.setData(self.liveapd_t, self.liveapd_pl)
         processEvents()
 
+    def best_z_distance(self):
+        self.dbl_tracker_zpos.setValue(self.dbl_best_z.value())
+        print("smile")
+        # self.curve_focus.setData(self.focus_t, self.focus_pl)
+
+    def best_z_clear(self):
+        self.focus_t = np.array([])
+        self.focus_fit_pl = np.array([])
+        self.focus_pl = np.array([])
+        self.curve_focus.setData([], [])
+        self.curve_fit_focus.setData([], [])
+
     def liveapd_clear(self):
         self.liveapd_pl = np.array([])
         self.liveapd_t = np.array([])
         self.curve_liveapd.setData([], [])
+
 
     def liveapd_grab_screenshots(self):
         self.pixmap_liveapd_graph = self.widget_liveapd.grab()

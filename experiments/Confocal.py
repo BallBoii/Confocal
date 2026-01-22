@@ -1,12 +1,17 @@
 from PyQt6.QtCore import pyqtSignal
-import time, datetime
+import time
 import numpy as np
-import warnings
-
+from scipy.optimize import curve_fit
 from . import ExpThread
 
 import nidaqmx
-from nidaqmx.constants import AcquisitionType, READ_ALL_AVAILABLE
+
+import os
+import scipy.io as sio
+
+import file_utils
+import fitters
+
 
 class Confocal(ExpThread.ExpThread):
     '''MODIFIED TO USE ANALOG SIGNAL FROM PHOTODIODE INSTEAD'''
@@ -131,6 +136,8 @@ class Confocal(ExpThread.ExpThread):
                 time.sleep(0.1) # PFM450E settling time rated for 25ms
                 self.sweep_multiple_frames(zindex)
 
+
+
     def sweep_multiple_frames(self, zindex=0):
         exit_loop = False
 
@@ -166,8 +173,11 @@ class Confocal(ExpThread.ExpThread):
                 ao_task.timing.cfg_samp_clk_timing(rate, source='', samps_per_chan=len(self.var1)*len(self.var2) + 1)
 
                 ci_task.ci_channels.add_ci_count_edges_chan(f"{self.ctrapd['dev']}")
-                ci_task.timing.cfg_samp_clk_timing(rate, source='/Dev1-AnalogOut/ao/SampleClock', samps_per_chan=len(self.var1)*len(self.var2) + 1)
-                ci_task.triggers.arm_start_trigger.dig_edge_src = '/Dev1-AnalogOut/ao/StartTrigger'
+                # ci_task.timing.cfg_samp_clk_timing(rate, source='/Dev1-AnalogOut/ao/SampleClock', samps_per_chan=len(self.var1)*len(self.var2) + 1)
+                # ci_task.triggers.arm_start_trigger.dig_edge_src = '/Dev1-AnalogOut/ao/StartTrigger'
+                ci_task.timing.cfg_samp_clk_timing(rate, source='/Dev1/ao/SampleClock',
+                                                   samps_per_chan=len(self.var1) * len(self.var2) + 1)
+                ci_task.triggers.arm_start_trigger.dig_edge_src = '/Dev1/ao/StartTrigger'
                 if not self.ctrapd['addr_src'].endswith('Source'):
                     ci_task.ci_channels[0].ci_count_edges_term = self.ctrapd['addr_src']
 
@@ -293,6 +303,103 @@ class Confocal(ExpThread.ExpThread):
                 if self.isRunning():
                     self.wait_for_mainexp()
 
+    ### move focus score in side this for optimistic solution
+
+    def model(self, x, A, x0, gamma, m, c):
+        # Half-width at half-maximum (HWHM)
+        half_gamma = gamma / 2.0
+
+        # Lorentzian component (normalized to integrate to A)
+        lorentzian = (A / np.pi) * (half_gamma / ((x - x0) ** 2 + half_gamma ** 2))
+
+        # Linear background component
+        linear_background = m * x + c
+
+        return lorentzian + linear_background
+
+    def get_guess(self, xs, ys):
+        A_guess = np.max(ys) - np.min(ys)
+        x0_guess = xs[np.argmax(ys)]
+        gamma_guess = (np.max(xs) - np.min(xs)) / 10.0
+        m_guess = (ys[-1] - ys[0]) / (xs[-1] - xs[0])
+        c_guess = ys[0] - m_guess * xs[0]
+
+        initial_guesses = [A_guess, x0_guess, gamma_guess, m_guess, c_guess]
+
+        try:
+            popt, pcov = curve_fit(
+                f=self.model,  # ✅ FIXED
+                xdata=xs,
+                ydata=ys,
+                p0=initial_guesses,
+                bounds=(
+                    [0.0, np.min(xs), 0.0, -np.inf, -np.inf],
+                    [np.inf, np.max(xs), np.ptp(xs), np.inf, np.inf]
+                )
+            )
+
+            fit_ys = self.model(xs, *popt)
+
+        except RuntimeError as e:
+            print("\nERROR: Curve fitting failed.")
+            print(f"Details: {e}")
+            popt = None
+            fit_ys = None
+
+        return popt, fit_ys
+
+    def best_fit(self):
+        if self.isFinished():
+            print(1)
+        else:
+            wavenum = file_utils.getwavenum()
+            print('file_name = ', wavenum)
+            i = 1
+            path = 'C:/Users/Confocal/Documents/data_mat/'
+            filename = f'IMG_{wavenum:04d}.mat'
+            if not os.path.exists(path + f'{filename}'):
+                print(f'{filename} does not exist.')
+
+            data = sio.loadmat(path + f'{filename}')
+
+            pl = np.squeeze(data['pl'])
+
+            scores = []
+
+            if pl.ndim == 3:
+                for z in range(pl.shape[2]):
+                    frame = pl[:, :, z]
+
+                    score, filtered = fitters.fit_focus_score.func(self, frame, axis=1)
+                    scores.append(score)
+
+            zvals = np.squeeze(data['zvals'])
+
+            # if self.mainexp.btn_confocal_stop.isChecked() == False:
+            #     self.mainexp.btn_confocal_stop.clicked.connect(self.mainexp.confocal_stop)
+            # else:
+            #     print(1)
+            popt, fit_ys = self.get_guess(zvals, scores)
+            if popt is None:
+                return
+
+            zmax = popt[1]
+            self.mainexp.best_z_clear()
+            self.mainexp.focus_t = np.append(self.mainexp.focus_t, zvals)
+            self.mainexp.focus_pl = np.append(self.mainexp.focus_pl, scores)
+            self.mainexp.focus_pl = np.append(self.mainexp.focus_fit_pl, fit_ys)
+            self.mainexp.curve_focus.setData(
+                self.mainexp.focus_t,
+                self.mainexp.focus_pl
+            )
+            self.mainexp.curve_fit_focus.setData(
+                self.mainexp.focus_t,
+                self.mainexp.focus_fit_pl
+            )
+            self.mainexp.dbl_best_z.setValue(zmax)
+            self.mainexp.best_z_distance()
+
+
     def cleanup(self):
         if self.mainexp.chkbx_autosave.isChecked() and not self.mainexp.datasaved:
             self.save()
@@ -302,6 +409,10 @@ class Confocal(ExpThread.ExpThread):
         self.mainexp.set_gui_btn_enable('all', True)
         self.mainexp.set_gui_input_enable('confocal', True)
         self.mainexp.btn_confocal_stop.setEnabled(False)
+        if self.mainexp.int_confocal_z_numdivs.value() == 0:
+            pass
+        else:
+            self.best_fit()
 
     def save(self, ext=False):
         if self.isRunning() and not ext:
