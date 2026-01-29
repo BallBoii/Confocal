@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1771</width>
-    <height>1147</height>
+    <width>1619</width>
+    <height>905</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -50,7 +50,7 @@
      <string>start</string>
     </property>
     <property name="alignment">
-     <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
     </property>
    </widget>
    <widget class="QPushButton" name="btn_confocal_stop">
@@ -76,7 +76,7 @@
      </rect>
     </property>
     <property name="buttonSymbols">
-     <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
+     <enum>QAbstractSpinBox::NoButtons</enum>
     </property>
    </widget>
    <widget class="QSpinBox" name="int_confocal_z_numdivs">
@@ -115,7 +115,7 @@
      <bool>true</bool>
     </property>
     <property name="stepType">
-     <enum>QAbstractSpinBox::StepType::AdaptiveDecimalStepType</enum>
+     <enum>QAbstractSpinBox::AdaptiveDecimalStepType</enum>
     </property>
    </widget>
    <widget class="QPushButton" name="btn_confocal_start">
@@ -177,7 +177,7 @@
      <bool>true</bool>
     </property>
     <property name="stepType">
-     <enum>QAbstractSpinBox::StepType::AdaptiveDecimalStepType</enum>
+     <enum>QAbstractSpinBox::AdaptiveDecimalStepType</enum>
     </property>
    </widget>
    <widget class="QLabel" name="label_confocal_numdivs">
@@ -193,7 +193,7 @@
      <string># step</string>
     </property>
     <property name="alignment">
-     <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
     </property>
    </widget>
    <widget class="QPushButton" name="btn_confocal_live">
@@ -238,7 +238,7 @@
      <string>z (μm)</string>
     </property>
     <property name="alignment">
-     <set>Qt::AlignmentFlag::AlignCenter</set>
+     <set>Qt::AlignCenter</set>
     </property>
    </widget>
    <widget class="QPushButton" name="btn_confocal_start_roi">
@@ -267,7 +267,7 @@
      <string>x (μm)</string>
     </property>
     <property name="alignment">
-     <set>Qt::AlignmentFlag::AlignCenter</set>
+     <set>Qt::AlignCenter</set>
     </property>
    </widget>
    <widget class="QDoubleSpinBox" name="dbl_confocal_x_stop">
@@ -283,7 +283,7 @@
      <bool>true</bool>
     </property>
     <property name="stepType">
-     <enum>QAbstractSpinBox::StepType::AdaptiveDecimalStepType</enum>
+     <enum>QAbstractSpinBox::AdaptiveDecimalStepType</enum>
     </property>
    </widget>
    <widget class="QCheckBox" name="chkbx_confocal_autolevel">
@@ -296,7 +296,7 @@
      </rect>
     </property>
     <property name="layoutDirection">
-     <enum>Qt::LayoutDirection::RightToLeft</enum>
+     <enum>Qt::RightToLeft</enum>
     </property>
     <property name="text">
      <string>auto level</string>
@@ -315,7 +315,7 @@
      <string># avg</string>
     </property>
     <property name="alignment">
-     <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
     </property>
    </widget>
    <widget class="QSpinBox" name="int_confocal_x_numdivs">
@@ -380,7 +380,7 @@
      <bool>true</bool>
     </property>
     <property name="stepType">
-     <enum>QAbstractSpinBox::StepType::AdaptiveDecimalStepType</enum>
+     <enum>QAbstractSpinBox::AdaptiveDecimalStepType</enum>
     </property>
    </widget>
    <widget class="QLabel" name="label_confocal_stop">
@@ -396,7 +396,7 @@
      <string>stop</string>
     </property>
     <property name="alignment">
-     <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
     </property>
    </widget>
    <widget class="QLabel" name="label_confocal_y">
@@ -412,7 +412,7 @@
      <string>y (μm)</string>
     </property>
     <property name="alignment">
-     <set>Qt::AlignmentFlag::AlignCenter</set>
+     <set>Qt::AlignCenter</set>
     </property>
    </widget>
    <widget class="QPushButton" name="btn_map_copy">
@@ -615,10 +615,10 @@
      </rect>
     </property>
     <property name="frameShape">
-     <enum>QFrame::Shape::NoFrame</enum>
+     <enum>QFrame::NoFrame</enum>
     </property>
     <property name="frameShadow">
-     <enum>QFrame::Shadow::Raised</enum>
+     <enum>QFrame::Raised</enum>
     </property>
     <widget class="QWidget" name="gridLayoutWidget">
      <property name="geometry">
@@ -713,7 +713,7 @@
      <string>y (μm)</string>
     </property>
     <property name="alignment">
-     <set>Qt::AlignmentFlag::AlignCenter</set>
+     <set>Qt::AlignCenter</set>
     </property>
    </widget>
    <widget class="QDoubleSpinBox" name="dbl_tracker_zpos">
@@ -727,9 +727,6 @@
     </property>
     <property name="keyboardTracking">
      <bool>false</bool>
-    </property>
-    <property name="maximum">
-     <double>250.990000000000009</double>
     </property>
    </widget>
    <widget class="QLabel" name="label_tracker_x">
@@ -745,7 +742,7 @@
      <string>x (μm)</string>
     </property>
     <property name="alignment">
-     <set>Qt::AlignmentFlag::AlignCenter</set>
+     <set>Qt::AlignCenter</set>
     </property>
    </widget>
    <widget class="QPushButton" name="btn_map_home">
@@ -800,7 +797,7 @@
      <string>μm</string>
     </property>
     <property name="alignment">
-     <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
+     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
     </property>
    </widget>
    <widget class="QLabel" name="label_confocal_x_3">
@@ -816,7 +813,7 @@
      <string>μm</string>
     </property>
     <property name="alignment">
-     <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
+     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
     </property>
    </widget>
    <widget class="QPushButton" name="btn_confocal_acqtime_dec">
@@ -855,7 +852,7 @@
      </rect>
     </property>
     <property name="layoutDirection">
-     <enum>Qt::LayoutDirection::RightToLeft</enum>
+     <enum>Qt::RightToLeft</enum>
     </property>
     <property name="text">
      <string>auto level</string>
@@ -897,50 +894,14 @@
      </rect>
     </property>
    </widget>
-   <widget class="GraphicsLayoutWidget" name="glw_best_focus">
-    <property name="geometry">
-     <rect>
-      <x>890</x>
-      <y>860</y>
-      <width>691</width>
-      <height>151</height>
-     </rect>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_best_focus">
-    <property name="geometry">
-     <rect>
-      <x>740</x>
-      <y>900</y>
-      <width>141</width>
-      <height>22</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Best focus distance at Z =</string>
-    </property>
-   </widget>
-   <widget class="QDoubleSpinBox" name="dbl_best_z">
-    <property name="geometry">
-     <rect>
-      <x>760</x>
-      <y>930</y>
-      <width>91</width>
-      <height>41</height>
-     </rect>
-    </property>
-    <property name="maximum">
-     <double>250.990000000000009</double>
-    </property>
-   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1771</width>
-     <height>21</height>
+     <width>1619</width>
+     <height>22</height>
     </rect>
    </property>
   </widget>

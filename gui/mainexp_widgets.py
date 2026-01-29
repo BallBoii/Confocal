@@ -531,11 +531,9 @@ class CustomLUTItem(pg.HistogramLUTItem):
                     self.imageItem().sigImageChanged.disconnect()
             elif self.imageItem is not None:
                 self.imageItem.sigImageChanged.disconnect()
-
         else:
             for img in self.imageItem:
                 img().sigImageChanged.disconnect()
-
 
         # allow setting array of images
         if type(img_list) is not list:
@@ -592,7 +590,7 @@ class CustomLUTItem(pg.HistogramLUTItem):
         self.update()
 
     def imageChanged(self, autoLevel=False, autoRange=False):
-        targetHistogramSize = 100.0
+        targetHistogramSize = 100
         if type(self.imageItem) is not list:
             h = self.imageItem().getHistogram(targetHistogramSize=targetHistogramSize)
         else:

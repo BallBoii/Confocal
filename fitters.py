@@ -1,6 +1,4 @@
 from scipy.optimize import curve_fit
-from scipy import signal
-import cv2
 import numpy as np
 import inspect
 from scipy.stats import chi2
@@ -23,8 +21,7 @@ class Fitter:
                               'exp_offset': fit_exp_offset(),
                               'power': fit_power(),
                               'power_offset': fit_power_offset(),
-                              'satcurve': fit_satcurve(),
-                              'focus_score': fit_focus_score()}
+                              'satcurve': fit_satcurve()}
 
         self.fitter = None
         if func is not None:
@@ -881,102 +878,26 @@ class fit_nvdepth_peace(fit_xy8):
         return self.b2d(self.fp[0])*1e9
 
 
-class fit_focus_score(GenericFit):
-    # Gaussian Fit
-    def __init__(self, data=None, xvals=None):
-        super().__init__(data, xvals)
-
-    def func(self,image, axis=1):
-        mean = np.mean(image)
-        std = np.std(image)
-        image = np.squeeze(image)
-        image[image < mean / 2] = 0
-        image[image > mean + std] = mean + std
-
-        # compress dynamic range
-        image = np.log(image + 1)
-
-        # median filter
-        if axis == 0:
-            image = signal.medfilt2d(image, kernel_size=(3, 1))
-        elif axis == 1:
-            image = signal.medfilt2d(image, kernel_size=(1, 3))
-        else:
-            raise ValueError("axis must be 0 or 1")
-
-        # low-pass filter
-        # the value can be linked to parameter on program
-        fs = 50 / 300  # px/micron
-        cutoff = 1 / 20  # 1/micron
-        Wn = cutoff * 2 / fs
-        order = 2
-        b, a = signal.butter(order, Wn, btype='low')
-
-        filtered = np.squeeze(signal.filtfilt(b, a, image, axis=axis))
-        filtered -= np.median(filtered)
-        filtered[filtered < 0] = 0
-
-        score = np.sum(filtered)
-
-        return score, filtered
-
-class fit_Lorentzian_linear(GenericFit):
-    def __init__(self, data=None, xvals=None):
-        super().__init__(data, xvals)
-
-    def func(self):
-        return 'func = (A / np.pi) * (half_gamma / ((x - x0) ** 2 + half_gamma ** 2)) + m * x + c'
-
-    def model(x, A, x0, gamma, m, c):
-        # Half-width at half-maximum (HWHM)
-        half_gamma = gamma / 2.0
-
-        # Lorentzian component (normalized to integrate to A)
-        lorentzian = (A / np.pi) * (half_gamma / ((x - x0) ** 2 + half_gamma ** 2))
-
-        # Linear background component
-        linear_background = m * x + c
-
-        return lorentzian + linear_background
-
-    def get_guess(self, xs, ys):
-        # Initial guesses are CRITICAL for successful fitting.
-        # A: Estimate peak height (Max Y - Min Y)
-        A_guess = np.max(ys) - np.min(ys)
-        # x0: Estimate peak position (x value where y is maximum)
-        x0_guess = xs[np.argmax(ys)]
-        # gamma: Rough guess for the width (usually 1/10th of the x range)
-        gamma_guess = (np.max(xs) - np.min(xs)) / 10.0
-        # m: Rough estimate of the slope (y change / x change across the endpoints)
-        m_guess = (ys[-1] - ys[0]) / (xs[-1] - xs[0])
-        # c: Rough estimate of the intercept (start y value)
-        c_guess = ys[0] - m_guess * xs[0]
-        func = 'func = (A / np.pi) * (half_gamma / ((x - x0) ** 2 + half_gamma ** 2)) + m * x + c'
-        initial_guesses = [A_guess, x0_guess, gamma_guess, m_guess, c_guess]
-        try:
-            # Use curve_fit to find the optimal parameters
-            popt, pcov = curve_fit(
-                f=func,
-                xdata=xs,
-                ydata=ys,
-                p0=initial_guesses,
-                # Define bounds to help the fitter (optional, but recommended)
-                # Bounds: [A, x0, gamma, m, c]
-                bounds=([0.0, np.min(xs), 0.0, -np.inf, -np.inf],
-                        [np.inf, np.max(xs), np.max(xs) - np.min(xs), np.inf, np.inf])
-            )
-
-            # popt contains the optimal parameters
-            A_fit, x0_fit, gamma_fit, m_fit, c_fit = popt
-
-            # Calculate the fitted curve
-            fit_ys = self.model(xs, *popt)
-
-        except RuntimeError as e:
-            print("\nERROR: Curve fitting failed.")
-            print(f"Details: {e}")
-            popt = None
-            fit_ys = None
-
-        return popt, fit_ys
-
+# class fit_rabi(GenericFit):
+#     '''
+#     used for fitting rabi oscillation data when many oscillations are present
+#     uses a 2 component sinusoid model. this is very unstable currently with too
+#     many fit parameters.
+#     '''
+#     def __init__(self, data, xvals=None):
+#         super().__init__(data, xvals)
+#
+#     def model(self, x, amp, f1, phi1, f2, phi2, offset):
+#         func = amp * np.sin(2*np.pi*x*f1 + phi1) * np.sin(2*np.pi*x*f2 + phi2) + offset
+#         return func
+#
+#     def get_guess(self):
+#         amp = .15
+#         f1 = 10
+#         phi1 = 0
+#         f2 = 0.25
+#         phi2 = 1.57
+#         offset = 0.85
+#         self.guess = [amp, f1, phi1, f2, phi2, offset]
+#         return self.guess
+#
