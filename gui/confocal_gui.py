@@ -160,7 +160,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.map_ax_ymax = 0
 
         '''PIEZO CONTROL'''
-        serial_no = "44506394"
+        serial_no = "44533394"
         self.piezo = instruments.ThorlabsPiezo.PFM450E(serial_no)
         self.piezo.SetPosition(0.0)
 
@@ -184,6 +184,13 @@ class MainWindow(QtWidgets.QMainWindow):
         self.curve_liveapd = self.plt_liveapd.plot(pen='r')
         self.liveapd_pl = np.array([])
         self.liveapd_t = np.array([])
+
+        self.plt_focus_score = self.glw_liveapd.addPlot()
+        self.plt_focus_score.setLabels(left='focus score', bottom='zpos (um)')
+        self.curve_focus_score = self.plt_focus_score.plot(pen='r')
+        self.focus_score = np.array([])
+        self.focus_zpos = np.array([])
+        self.plt_focus_score.hide()
 
         '''SET UP ALL GUI'''
         # Set up ranges and step limits in the gui fields
@@ -526,6 +533,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.dbl_tracker_zpos.setSingleStep(stepsize)
 
     def liveapd_start(self):
+        self.plt_focus_score.hide()
+        self.plt_liveapd.show()
         self.thread_liveapd.start()
 
     def liveapd_stop(self):
@@ -550,6 +559,15 @@ class MainWindow(QtWidgets.QMainWindow):
     def liveapd_grab_screenshots(self):
         self.pixmap_liveapd_graph = self.widget_liveapd.grab()
         processEvents()
+
+    def focus_score_updateplot(self, zindex, score):
+        if len(self.focus_zpos) > 1:
+            self.plt_liveapd.hide()
+            self.plt_focus_score.show()
+            self.focus_score[zindex] = score
+            self.curve_focus_score.setData(self.focus_zpos, self.focus_score)
+        else:
+            self.plt_focus_score.hide()
 
     def import_gui_settings(self, data):
         # refill the linein, double, and integer fields in the gui

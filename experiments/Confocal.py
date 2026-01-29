@@ -1,6 +1,7 @@
 from PyQt6.QtCore import pyqtSignal
 import time, datetime
 import numpy as np
+from scipy import signal
 import warnings
 
 from . import ExpThread
@@ -15,6 +16,7 @@ class Confocal(ExpThread.ExpThread):
 
     signal_confocal_initplot = pyqtSignal()
     signal_confocal_updateplot = pyqtSignal(int, int)
+    signal_focus_score_updateplot = pyqtSignal(int, float)
 
     def __init__(self, mainexp, wait_condition):
         super().__init__(mainexp, wait_condition)
@@ -37,6 +39,7 @@ class Confocal(ExpThread.ExpThread):
 
         self.signal_confocal_initplot.connect(mainexp.confocal_initplot)
         self.signal_confocal_updateplot.connect(mainexp.confocal_updateplot)
+        self.signal_focus_score_updateplot.connect(mainexp.focus_score_updateplot)
 
         self.plane_coef = [0, 0, 1, 5]  # coefficients for Ax + By + Cz = D for autoZ
 
@@ -85,12 +88,18 @@ class Confocal(ExpThread.ExpThread):
         mainexp.confocal_rngy = self.var2
         mainexp.confocal_rngz = self.var3
 
+        mainexp.focus_zpos = self.var3
+
         self.acqtime = mainexp.dbl_confocal_acqtime.value()
 
     def initplots(self):
         self.mainexp.confocal_pl = np.empty((self.var1.size, self.var2.size, self.var3.size))
         self.mainexp.confocal_pl[:][:][:] = np.nan
         self.confocal_live_stacks = np.array([])
+
+        if len(self.var3) > 1: # z-stack, assume autofocus todo: add condition
+            self.mainexp.focus_score = np.empty(len(self.var3))
+            self.mainexp.focus_score[:] = np.nan
 
         if self.mode == 0: # Horizontal Scans
             self.mainexp.confocal_scanLine = self.mainexp.confocal_hLine
@@ -101,6 +110,7 @@ class Confocal(ExpThread.ExpThread):
 
         self.signal_confocal_initplot.emit()
         self.signal_confocal_updateplot.emit(0, 0)
+        self.signal_focus_score_updateplot.emit(0,np.NaN)
 
         if self.isLive:
             self.mainexp.confocal_scanLine.show()
@@ -130,6 +140,8 @@ class Confocal(ExpThread.ExpThread):
                 self.mainexp.piezo.SetPosition(z)
                 time.sleep(0.1) # PFM450E settling time rated for 25ms
                 self.sweep_multiple_frames(zindex)
+                if True: # todo: add condition
+                    self.signal_focus_score_updateplot.emit(zindex, self.calc_focus_score(zindex))
 
     def sweep_multiple_frames(self, zindex=0):
         exit_loop = False
@@ -292,6 +304,40 @@ class Confocal(ExpThread.ExpThread):
                     print(f'Mode {self.mode} not implemented')
                 if self.isRunning():
                     self.wait_for_mainexp()
+
+    def calc_focus_score(self, zindex):
+        image = self.mainexp.confocal_pl[:, :, zindex]
+        mean = np.mean(image)
+        std = np.std(image)
+        image = np.squeeze(image)
+        image[image < mean / 2] = 0
+        image[image > mean + std] = mean + std
+
+        # compress dynamic range
+        image = np.log(image + 1)
+
+        # median filter
+        if self.mode == 0: # todo: double check axis
+            image = signal.medfilt2d(image, kernel_size=(3, 1))
+        elif self.mode == 1:
+            image = signal.medfilt2d(image, kernel_size=(1, 3))
+        else:
+            print(f'Mode {self.mode} not implemented')
+
+        # low-pass filter
+        # the value can be linked to parameter on program
+        fs = 50 / 300  # px/micron
+        cutoff = 1 / 20  # 1/micron
+        Wn = cutoff * 2 / fs
+        order = 2
+        b, a = signal.butter(order, Wn, btype='low')
+
+        filtered = np.squeeze(signal.filtfilt(b, a, image, axis=self.mode))
+        filtered -= np.median(filtered)
+        filtered[filtered < 0] = 0
+
+        score = np.sum(filtered)
+        return score
 
     def cleanup(self):
         if self.mainexp.chkbx_autosave.isChecked() and not self.mainexp.datasaved:
