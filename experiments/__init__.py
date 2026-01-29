@@ -7,6 +7,6 @@ from . import Confocal
 # from . import Spectrometer
 # from . import Batch
 # from . import Terminal
-# from . import APD
+from . import APD
 # from . import PicoHarp
 # from . import SatCurve
