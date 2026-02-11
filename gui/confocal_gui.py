@@ -188,9 +188,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self.plt_focus_score = self.glw_liveapd.addPlot()
         self.plt_focus_score.setLabels(left='focus score', bottom='zpos (um)')
         self.curve_focus_score = self.plt_focus_score.plot(pen='r')
+        self.curve_focus_score_fit = self.plt_focus_score.plot(pen='w')
         self.focus_score = np.array([])
         self.focus_zpos = np.array([])
-        self.plt_focus_score.hide()
+        self.focus_score_fit = np.array([])
+        self.focus_zpos_fit = np.array([])
+        self.plt_focus_score.setVisible(False)
 
         '''SET UP ALL GUI'''
         # Set up ranges and step limits in the gui fields
@@ -560,14 +563,15 @@ class MainWindow(QtWidgets.QMainWindow):
         self.pixmap_liveapd_graph = self.widget_liveapd.grab()
         processEvents()
 
-    def focus_score_updateplot(self, zindex, score):
+    def focus_score_updateplot(self, zindex):
         if len(self.focus_zpos) > 1:
-            self.plt_liveapd.hide()
-            self.plt_focus_score.show()
-            self.focus_score[zindex] = score
+            self.plt_liveapd.setVisible(False)
+            self.plt_focus_score.setVisible(True)
             self.curve_focus_score.setData(self.focus_zpos, self.focus_score)
+            self.curve_focus_score_fit.setData(self.focus_zpos_fit, self.focus_score_fit)
         else:
-            self.plt_focus_score.hide()
+            self.plt_focus_score.setVisible(False)
+            self.plt_liveapd.setVisible(True)
 
     def import_gui_settings(self, data):
         # refill the linein, double, and integer fields in the gui

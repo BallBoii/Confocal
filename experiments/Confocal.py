@@ -3,6 +3,7 @@ import time, datetime
 import numpy as np
 from scipy import signal
 import warnings
+from scipy.optimize import curve_fit
 
 from . import ExpThread
 
@@ -16,7 +17,7 @@ class Confocal(ExpThread.ExpThread):
 
     signal_confocal_initplot = pyqtSignal()
     signal_confocal_updateplot = pyqtSignal(int, int)
-    signal_focus_score_updateplot = pyqtSignal(int, float)
+    signal_focus_score_updateplot = pyqtSignal(int)
 
     def __init__(self, mainexp, wait_condition):
         super().__init__(mainexp, wait_condition)
@@ -100,6 +101,8 @@ class Confocal(ExpThread.ExpThread):
         if len(self.var3) > 1: # z-stack, assume autofocus todo: add condition
             self.mainexp.focus_score = np.empty(len(self.var3))
             self.mainexp.focus_score[:] = np.nan
+            self.mainexp.focus_zpos_fit = []
+            self.mainexp.focus_score_fit = []
 
         if self.mode == 0: # Horizontal Scans
             self.mainexp.confocal_scanLine = self.mainexp.confocal_hLine
@@ -110,7 +113,7 @@ class Confocal(ExpThread.ExpThread):
 
         self.signal_confocal_initplot.emit()
         self.signal_confocal_updateplot.emit(0, 0)
-        self.signal_focus_score_updateplot.emit(0,np.NaN)
+        self.signal_focus_score_updateplot.emit(0)
 
         if self.isLive:
             self.mainexp.confocal_scanLine.show()
@@ -132,7 +135,7 @@ class Confocal(ExpThread.ExpThread):
 
         # todo: LIVE and z-stack are not compatible (duh!). Need to prevent running by accident.
         # Regular Scan. No Z-Stack.
-        if len(self.var3) == 0:
+        if len(self.var3) == 1:
             self.sweep_multiple_frames()
         # Z-Stack
         else:
@@ -141,7 +144,11 @@ class Confocal(ExpThread.ExpThread):
                 time.sleep(0.1) # PFM450E settling time rated for 25ms
                 self.sweep_multiple_frames(zindex)
                 if True: # todo: add condition
-                    self.signal_focus_score_updateplot.emit(zindex, self.calc_focus_score(zindex))
+                    self.mainexp.focus_score[zindex] = self.calc_focus_score(zindex)
+                    if zindex == len(self.var3) - 1:
+                        zmax = self.fit_focus()
+                    self.signal_focus_score_updateplot.emit(zindex)
+
 
     def sweep_multiple_frames(self, zindex=0):
         exit_loop = False
@@ -178,8 +185,8 @@ class Confocal(ExpThread.ExpThread):
                 ao_task.timing.cfg_samp_clk_timing(rate, source='', samps_per_chan=len(self.var1)*len(self.var2) + 1)
 
                 ci_task.ci_channels.add_ci_count_edges_chan(f"{self.ctrapd['dev']}")
-                ci_task.timing.cfg_samp_clk_timing(rate, source='/Dev1-AnalogOut/ao/SampleClock', samps_per_chan=len(self.var1)*len(self.var2) + 1)
-                ci_task.triggers.arm_start_trigger.dig_edge_src = '/Dev1-AnalogOut/ao/StartTrigger'
+                ci_task.timing.cfg_samp_clk_timing(rate, source='/Dev1/ao/SampleClock', samps_per_chan=len(self.var1)*len(self.var2) + 1)
+                ci_task.triggers.arm_start_trigger.dig_edge_src = '/Dev1/ao/StartTrigger'
                 if not self.ctrapd['addr_src'].endswith('Source'):
                     ci_task.ci_channels[0].ci_count_edges_term = self.ctrapd['addr_src']
 
@@ -338,6 +345,58 @@ class Confocal(ExpThread.ExpThread):
 
         score = np.sum(filtered)
         return score
+
+    def lorentzian_model(self, x, A, x0, gamma, m, c):
+        # Half-width at half-maximum (HWHM)
+        half_gamma = gamma / 2.0
+
+        # Lorentzian component (normalized to integrate to A)
+        lorentzian = (A / np.pi) * (half_gamma / ((x - x0) ** 2 + half_gamma ** 2))
+
+        # Linear background component
+        linear_background = m * x + c
+
+        return lorentzian + linear_background
+
+    def lorentzian_fit(self, xs, ys):
+        A_guess = np.max(ys) - np.min(ys)
+        x0_guess = xs[np.argmax(ys)]
+        gamma_guess = (np.max(xs) - np.min(xs)) / 5.0
+        m_guess = (ys[-1] - ys[0]) / (xs[-1] - xs[0])
+        c_guess = ys[0] - m_guess * xs[0]
+
+        initial_guesses = [A_guess, x0_guess, gamma_guess, m_guess, c_guess]
+
+        try:
+            popt, pcov = curve_fit(f=self.lorentzian_model,
+                                   xdata=xs,ydata=ys,
+                                   p0=initial_guesses,
+                                   bounds=([0.0, np.min(xs), 0.0, -np.inf, -np.inf],
+                                           [np.inf, np.max(xs), np.ptp(xs), np.inf, np.inf])
+                                   )
+
+            fit_ys = self.lorentzian_model(xs, *popt)
+
+        except RuntimeError as e:
+            print("\nERROR: Curve fitting failed.")
+            print(f"Details: {e}")
+            popt = None
+            fit_ys = None
+
+        return popt, fit_ys
+
+    def fit_focus(self):
+        popt, fit_ys = self.lorentzian_fit(self.mainexp.focus_zpos, self.mainexp.focus_score)
+        if popt is None:
+            return
+        zmax = popt[1]
+        print('zmax = ', zmax)
+        zs = self.mainexp.focus_zpos
+        zs_fit = np.linspace(np.min(zs), np.max(zs), 100)
+        scores_fit = self.lorentzian_model(zs_fit, *popt)
+        self.mainexp.focus_zpos_fit = zs_fit
+        self.mainexp.focus_score_fit = scores_fit
+        return zmax
 
     def cleanup(self):
         if self.mainexp.chkbx_autosave.isChecked() and not self.mainexp.datasaved:
