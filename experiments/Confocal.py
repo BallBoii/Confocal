@@ -53,7 +53,7 @@ class Confocal(ExpThread.ExpThread):
     def prep_mainexp(self):
         if self.mainexp.thread_liveapd.isRunning():
             self.mainexp.thread_liveapd.cancel = True
-            self.mainexp.wait()
+            self.mainexp.thread_liveapd.wait()
 
         self.mainexp.datasaved = False
 
