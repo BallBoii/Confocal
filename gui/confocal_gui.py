@@ -60,7 +60,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         '''WORKER THREADS INITIALIZATION'''
         self.thread_confocal = exp.Confocal.Confocal(self, self.wait_confocal)
-        self.thread_liveapd = exp.APD.LiveAPD(self, self.wait_liveapd)
+        self.thread_liveapd = exp.APD.CountMonitor(self, self.wait_liveapd)
 
         '''CONFOCAL'''
         self.btn_confocal_mode_xy.setChecked(True)
@@ -160,8 +160,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.map_ax_ymax = 0
 
         '''PIEZO CONTROL'''
-        serial_no = "44533394"
-        self.piezo = ThorlabsPiezo.PFM450E(serial_no)
+        self.piezo = ThorlabsPiezo.PFM450E(self.inst_params['piezo']['sn'])
         self.piezo.SetPosition(0.0)
 
         self.cbox_zpos_stepsize.addItems(['Z: 10 μm', 'Z:  1 μm', 'Z: 0.1 μm'])

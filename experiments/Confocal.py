@@ -1,8 +1,7 @@
 from PyQt6.QtCore import pyqtSignal
-import time, datetime
+import time
 import numpy as np
 from scipy import signal
-import warnings
 from scipy.optimize import curve_fit
 
 from . import ExpThread
@@ -44,13 +43,18 @@ class Confocal(ExpThread.ExpThread):
 
         self.plane_coef = [0, 0, 1, 5]  # coefficients for Ax + By + Cz = D for autoZ
 
-        self.galvos = self.mainexp.inst_params['instruments']['galvos']
+        self.galvos = self.mainexp.inst_params['galvos']
         self.galvos['scaleX'] = eval(self.galvos['scaleX'])
         self.galvos['scaleY'] = eval(self.galvos['scaleY'])
-        self.ctrapd = self.mainexp.inst_params['instruments']['ctrapd']
+        self.ctrapd = self.mainexp.inst_params['ctrapd']
 
+        print(self.galvos['ao'])
 
     def prep_mainexp(self):
+        if self.mainexp.thread_liveapd.isRunning():
+            self.mainexp.thread_liveapd.cancel = True
+            self.mainexp.wait()
+
         self.mainexp.datasaved = False
 
         # enable and disable the right buttons here
@@ -185,8 +189,8 @@ class Confocal(ExpThread.ExpThread):
                 ao_task.timing.cfg_samp_clk_timing(rate, source='', samps_per_chan=len(self.var1)*len(self.var2) + 1)
 
                 ci_task.ci_channels.add_ci_count_edges_chan(f"{self.ctrapd['dev']}")
-                ci_task.timing.cfg_samp_clk_timing(rate, source='/Dev1/ao/SampleClock', samps_per_chan=len(self.var1)*len(self.var2) + 1)
-                ci_task.triggers.arm_start_trigger.dig_edge_src = '/Dev1/ao/StartTrigger'
+                ci_task.timing.cfg_samp_clk_timing(rate, source=f'{self.galvos['ao']}/SampleClock', samps_per_chan=len(self.var1)*len(self.var2) + 1)
+                ci_task.triggers.arm_start_trigger.dig_edge_src = f'{self.galvos['ao']}/StartTrigger'
                 if not self.ctrapd['addr_src'].endswith('Source'):
                     ci_task.ci_channels[0].ci_count_edges_term = self.ctrapd['addr_src']
 
@@ -368,8 +372,7 @@ class Confocal(ExpThread.ExpThread):
         initial_guesses = [A_guess, x0_guess, gamma_guess, m_guess, c_guess]
 
         try:
-            popt, pcov = curve_fit(f=self.lorentzian_model,
-                                   xdata=xs,ydata=ys,
+            popt, pcov = curve_fit(f=self.lorentzian_model,xdata=xs,ydata=ys,
                                    p0=initial_guesses,
                                    bounds=([0.0, np.min(xs), 0.0, -np.inf, -np.inf],
                                            [np.inf, np.max(xs), np.ptp(xs), np.inf, np.inf])
