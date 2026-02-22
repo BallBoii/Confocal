@@ -11,7 +11,7 @@ import numpy as np
 # user-defined imports
 import file_utils
 import experiments as exp
-import instruments
+from instruments import ThorlabsPiezo
 
 # import UI files
 import mainexp_widgets
@@ -161,7 +161,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         '''PIEZO CONTROL'''
         serial_no = "44533394"
-        self.piezo = instruments.ThorlabsPiezo.PFM450E(serial_no)
+        self.piezo = ThorlabsPiezo.PFM450E(serial_no)
         self.piezo.SetPosition(0.0)
 
         self.cbox_zpos_stepsize.addItems(['Z: 10 μm', 'Z:  1 μm', 'Z: 0.1 μm'])
