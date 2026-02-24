@@ -48,12 +48,11 @@ class Confocal(ExpThread.ExpThread):
         self.galvos['scaleY'] = eval(self.galvos['scaleY'])
         self.ctrapd = self.mainexp.inst_params['ctrapd']
 
-        print(self.galvos['ao'])
-
     def prep_mainexp(self):
         if self.mainexp.thread_liveapd.isRunning():
             self.mainexp.thread_liveapd.cancel = True
             self.mainexp.thread_liveapd.wait()
+            self.wait_for_mainexp()
 
         self.mainexp.datasaved = False
 
@@ -189,8 +188,8 @@ class Confocal(ExpThread.ExpThread):
                 ao_task.timing.cfg_samp_clk_timing(rate, source='', samps_per_chan=len(self.var1)*len(self.var2) + 1)
 
                 ci_task.ci_channels.add_ci_count_edges_chan(f"{self.ctrapd['dev']}")
-                ci_task.timing.cfg_samp_clk_timing(rate, source=f'{self.galvos['ao']}/SampleClock', samps_per_chan=len(self.var1)*len(self.var2) + 1)
-                ci_task.triggers.arm_start_trigger.dig_edge_src = f'{self.galvos['ao']}/StartTrigger'
+                ci_task.timing.cfg_samp_clk_timing(rate, source=f"{self.galvos['ao']}/SampleClock", samps_per_chan=len(self.var1)*len(self.var2) + 1)
+                ci_task.triggers.arm_start_trigger.dig_edge_src = f"{self.galvos['ao']}/StartTrigger"
                 if not self.ctrapd['addr_src'].endswith('Source'):
                     ci_task.ci_channels[0].ci_count_edges_term = self.ctrapd['addr_src']
 
