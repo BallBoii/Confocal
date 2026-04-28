@@ -807,7 +807,7 @@
       <rect>
        <x>160</x>
        <y>680</y>
-       <width>61</width>
+       <width>81</width>
        <height>51</height>
       </rect>
      </property>
@@ -818,10 +818,10 @@
     <widget class="QComboBox" name="cbox_zpos_stepsize">
      <property name="geometry">
       <rect>
-       <x>150</x>
+       <x>160</x>
        <y>740</y>
        <width>81</width>
-       <height>21</height>
+       <height>23</height>
       </rect>
      </property>
     </widget>
@@ -830,7 +830,7 @@
       <rect>
        <x>60</x>
        <y>710</y>
-       <width>81</width>
+       <width>80</width>
        <height>23</height>
       </rect>
      </property>
@@ -843,7 +843,7 @@
       <rect>
        <x>60</x>
        <y>740</y>
-       <width>81</width>
+       <width>80</width>
        <height>23</height>
       </rect>
      </property>
@@ -901,7 +901,7 @@
       <rect>
        <x>60</x>
        <y>680</y>
-       <width>81</width>
+       <width>80</width>
        <height>23</height>
       </rect>
      </property>
@@ -957,8 +957,8 @@
     <widget class="QDoubleSpinBox" name="dbl_tracker_zrange">
      <property name="geometry">
       <rect>
-       <x>440</x>
-       <y>680</y>
+       <x>400</x>
+       <y>740</y>
        <width>81</width>
        <height>23</height>
       </rect>
@@ -970,9 +970,9 @@
     <widget class="QLabel" name="label_tracker_autofocus">
      <property name="geometry">
       <rect>
-       <x>370</x>
-       <y>680</y>
-       <width>61</width>
+       <x>310</x>
+       <y>740</y>
+       <width>81</width>
        <height>16</height>
       </rect>
      </property>
@@ -980,14 +980,14 @@
       <string>range (μm)</string>
      </property>
      <property name="alignment">
-      <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
+      <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
      </property>
     </widget>
     <widget class="QSpinBox" name="int_tracker_numdivs">
      <property name="geometry">
       <rect>
-       <x>440</x>
-       <y>710</y>
+       <x>400</x>
+       <y>770</y>
        <width>81</width>
        <height>22</height>
       </rect>
@@ -996,9 +996,9 @@
     <widget class="QLabel" name="label_tracker_numdivs">
      <property name="geometry">
       <rect>
-       <x>370</x>
-       <y>710</y>
-       <width>47</width>
+       <x>310</x>
+       <y>770</y>
+       <width>81</width>
        <height>22</height>
       </rect>
      </property>
@@ -1012,10 +1012,10 @@
     <widget class="QPushButton" name="btn_tracker_autofocus">
      <property name="geometry">
       <rect>
-       <x>360</x>
-       <y>740</y>
+       <x>290</x>
+       <y>680</y>
        <width>101</width>
-       <height>31</height>
+       <height>51</height>
       </rect>
      </property>
      <property name="text">
@@ -1025,8 +1025,8 @@
     <widget class="QRadioButton" name="btn_tracker_mode_image">
      <property name="geometry">
       <rect>
-       <x>470</x>
-       <y>770</y>
+       <x>400</x>
+       <y>710</y>
        <width>71</width>
        <height>17</height>
       </rect>
@@ -1038,8 +1038,8 @@
     <widget class="QRadioButton" name="btn_tracker_mode_pixel">
      <property name="geometry">
       <rect>
-       <x>470</x>
-       <y>750</y>
+       <x>400</x>
+       <y>690</y>
        <width>71</width>
        <height>17</height>
       </rect>
@@ -1062,6 +1062,106 @@
      </property>
      <property name="checkable">
       <bool>true</bool>
+     </property>
+    </widget>
+    <widget class="QDoubleSpinBox" name="dbl_tracker_acqtime">
+     <property name="geometry">
+      <rect>
+       <x>400</x>
+       <y>800</y>
+       <width>81</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="keyboardTracking">
+      <bool>false</bool>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_tracker_acqtime">
+     <property name="geometry">
+      <rect>
+       <x>310</x>
+       <y>800</y>
+       <width>81</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Acq. Time (s)</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="btn_illum_laser">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>780</y>
+       <width>111</width>
+       <height>51</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Laser On</string>
+     </property>
+     <property name="checkable">
+      <bool>true</bool>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="btn_illum_led">
+     <property name="geometry">
+      <rect>
+       <x>130</x>
+       <y>780</y>
+       <width>111</width>
+       <height>51</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>LED On</string>
+     </property>
+     <property name="checkable">
+      <bool>true</bool>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="btn_tracker_autofocus_2">
+     <property name="geometry">
+      <rect>
+       <x>600</x>
+       <y>660</y>
+       <width>101</width>
+       <height>51</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Yes</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="btn_tracker_autofocus_3">
+     <property name="geometry">
+      <rect>
+       <x>600</x>
+       <y>720</y>
+       <width>101</width>
+       <height>51</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>No</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="btn_tracker_autofocus_4">
+     <property name="geometry">
+      <rect>
+       <x>600</x>
+       <y>780</y>
+       <width>101</width>
+       <height>51</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>STOP</string>
      </property>
     </widget>
    </widget>
