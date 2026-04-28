@@ -12,6 +12,7 @@ import numpy as np
 import file_utils
 import experiments as exp
 from instruments import ThorlabsPiezo
+import nidaqmx
 
 # import UI files
 import mainexp_widgets
@@ -195,6 +196,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.focus_zpos_fit = np.array([])
         self.plt_focus_score.setVisible(False)
 
+        '''ILLUM CONTROL'''
+        self.btn_illum_laser.toggled.connect(lambda b: self.illum_set('laser', b))
+        self.btn_illum_led.toggled.connect(lambda b: self.illum_set('led', b))
+
         '''SET UP ALL GUI'''
         # Set up ranges and step limits in the gui fields
         if os.path.isfile(os.path.expanduser(os.path.join('~', 'Documents', 'exp_config', 'guifield_settings_confocal.yaml'))):
@@ -234,6 +239,17 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.pixmap_confocal_graph = None
         self.pixmap_confocal_fig = None
+
+    def illum_set(self, source, state):
+        """Sets the digital output for the laser or LED."""
+        line = self.inst_params['illum'].get(source)
+        if line:
+            try:
+                with nidaqmx.Task() as do_task:
+                    do_task.do_channels.add_do_chan(line)
+                    do_task.write(bool(state))
+            except Exception as e:
+                print(f"Error setting {source} illumination: {e}")
 
     def confocal_pxsync(self, b):
         if b:
