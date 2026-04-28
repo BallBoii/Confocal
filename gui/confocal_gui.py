@@ -4,7 +4,7 @@ import cv2
 from cv2_enumerate_cameras import enumerate_cameras
 
 # system imports
-import sys, os, scipy.io, warnings, functools
+import sys, os, scipy.io, warnings, functools, time
 import pyqtgraph as pg
 import numpy as np
 
@@ -91,7 +91,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.confocal_settings = []  # for storing previous scans [(xmin, max, ymin, ymax)]
 
         # Create PyQtGraph plots and histogram for confocal scans
-        for name in ['confocal', 'map']:
+        for name in ['confocal', 'camera']:
             setattr(self, 'vb_%s' % name, mainexp_widgets.ViewBoxWithROI())
             setattr(self, 'plt_%s' % name, pg.PlotItem(viewBox=getattr(self, 'vb_%s' % name)))
             setattr(self, 'qtimg_%s' % name, pg.ImageItem())
@@ -113,53 +113,49 @@ class MainWindow(QtWidgets.QMainWindow):
         self.confocal_hLine.hide()
         self.confocal_scanLine = None # handle for hLine or vLine during live scans
 
+        self.confocal_cursor = pg.ScatterPlotItem(pen=pg.mkPen('w', width=2), brush=None, symbol='o', size=7)
+        self.confocal_cursor.setData([0], [0])
+
+        self.plt_confocal.addItem(self.confocal_cursor)
         self.plt_confocal.addItem(self.confocal_vLine, ignoreBounds=True)
         self.plt_confocal.addItem(self.confocal_hLine, ignoreBounds=True)
 
         self.int_confocal_z_numdivs.valueChanged.connect(self.confocal_zstack_enable)
         self.confocal_zstack_enable(self.int_confocal_z_numdivs.value())
 
-        '''MAP PLOTS'''
-        self.glw_map = pg.GraphicsLayoutWidget()
-        self.glw_map.addItem(self.plt_map, 0, 0)
-        self.hlw_map = mainexp_widgets.CustomLUTWidget(image=self.qtimg_map)
-        self.hlw_map.gradient.setColorMap(cm)
+        self.btn_confocal_select.clicked.connect(self.confocal_select)
 
-        self.grid_map.addWidget(self.glw_map, 0, 0)
-        self.grid_map.addWidget(self.hlw_map, 0, 1)
+        '''CAMERA PLOTS'''
+        self.glw_camera = pg.GraphicsLayoutWidget()
+        self.glw_camera.addItem(self.plt_camera, 0, 0)
+        self.hlw_camera = mainexp_widgets.CustomLUTWidget(image=self.qtimg_camera)
+        self.hlw_camera.gradient.setColorMap(cm)
 
-        self.map_vLine = pg.InfiniteLine(angle=90, movable=False, pen=(0, 150, 100))
-        self.map_hLine = pg.InfiniteLine(angle=0, movable=False, pen=(0, 150, 100))
-        self.map_vLine.hide()
-        self.map_hLine.hide()
+        self.grid_camera.addWidget(self.glw_camera, 0, 0)
+        self.grid_camera.addWidget(self.hlw_camera, 0, 1)
 
-        self.map_cursor = pg.ScatterPlotItem(pen=pg.mkPen('w', width=2), brush=None, symbol='o', size=7)
-        self.map_cursor.setData([0], [0])
-        self.map_nvlist = pg.ScatterPlotItem(pen=pg.mkPen((0, 150, 100), width=2), brush=None, symbol='o', size=7)
-        self.map_nvlist.setData([], [])
-        self.map_nvlabels = [] # for storing NV numbers
+        self.camera_vLine = pg.InfiniteLine(angle=90, movable=False, pen=(0, 150, 100))
+        self.camera_hLine = pg.InfiniteLine(angle=0, movable=False, pen=(0, 150, 100))
+        self.camera_vLine.hide()
+        self.camera_hLine.hide()
 
-        self.plt_map.addItem(self.map_nvlist)
-        self.plt_map.addItem(self.map_cursor)
-        self.plt_map.addItem(self.map_vLine, ignoreBounds=True)
-        self.plt_map.addItem(self.map_hLine, ignoreBounds=True)
+        self.camera_cursor = pg.ScatterPlotItem(pen=pg.mkPen('w', width=2), brush=None, symbol='o', size=7)
+        self.camera_cursor.setData([0], [0])
 
-        self.btn_map_load.clicked.connect(self.map_load)
-        self.btn_map_copy.clicked.connect(self.map_copy)
-        self.btn_map_select.clicked.connect(self.map_select)
-        self.btn_map_start_roi.clicked.connect(self.map_start_roi)
-        self.btn_map_home.clicked.connect(self.tracker_home)
-        self.chkbx_map_autolevel.setChecked(True)
-        self.chkbx_map_autolevel.stateChanged.connect(self.map_set_autolevel)
-        self.btn_map_camera.clicked.connect(self.map_camera_start)
+        self.plt_camera.addItem(self.camera_cursor)
+        self.plt_camera.addItem(self.camera_vLine, ignoreBounds=True)
+        self.plt_camera.addItem(self.camera_hLine, ignoreBounds=True)
 
-        self.map_data = np.array([])
-        self.map_ax_xmin = 0
-        self.map_ax_xmax = 0
-        self.map_ax_ymin = 0
-        self.map_ax_ymax = 0
+        self.btn_camera_select.clicked.connect(self.camera_select)
+        self.btn_camera_start.clicked.connect(self.camera_start)
+        self.btn_camera_start_roi.clicked.connect(self.camera_start_roi)
+        self.chkbx_camera_autolevel.setChecked(True)
+        self.chkbx_camera_autolevel.stateChanged.connect(self.camera_set_autolevel)
 
-        '''PIEZO CONTROL'''
+        self.camera_data = np.array([])
+
+
+        '''CONFOCAL CONTROL'''
         self.piezo = ThorlabsPiezo.PFM450E(self.inst_params['piezo']['sn'])
         self.piezo.SetPosition(0.0)
 
@@ -167,10 +163,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self.cbox_zpos_stepsize.currentTextChanged.connect(self.set_zpos_stepsize)
         self.dbl_tracker_zpos.valueChanged.connect(self.piezo.SetPosition)
 
+        self.btn_tracker_home.clicked.connect(self.tracker_home)
+
         '''Camera Thread'''
         self.cbox_camera_list.addItems([str(cam).rsplit(' ', 1)[0] for cam in enumerate_cameras(cv2.CAP_MSMF)])
         self.thread_camera = CameraThread(self)
-        self.thread_camera.frame_signal.connect(self.map_set_camera_image)
+        self.thread_camera.frame_signal.connect(self.camera_set_image)
 
         '''LIVE APD'''
         self.btn_liveapd_clear.clicked.connect(self.liveapd_clear)
@@ -248,8 +246,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.dbl_confocal_z_stop.setEnabled(bool(b))
 
     def confocal_start(self):
-        if self.btn_map_select.isChecked():
-            self.btn_map_select.setChecked(False)
+        if self.btn_confocal_select.isChecked():
+            self.btn_confocal_select.setChecked(False)
+        if self.btn_camera_select.isChecked():
+            self.btn_camera_select.setChecked(False)
+        self.confocal_cursor.hide()
 
         self.confocal_settings_store()
         self.thread_confocal.start()
@@ -297,6 +298,16 @@ class MainWindow(QtWidgets.QMainWindow):
         else:
             raise Exception('No ROI Selected')
 
+    def camera_start_roi(self):
+        print('TO IMPLEMENT: relative ROI')
+
+        roi = self.vb_camera.roi
+        if roi and roi.isVisible():
+            self.confocal_set_roi(roi)
+            self.confocal_start()
+        else:
+            raise Exception('No ROI Selected')
+
     def confocal_start_preset1(self):
         self.confocal_settings_store()
 
@@ -334,14 +345,6 @@ class MainWindow(QtWidgets.QMainWindow):
                     1.00000, 2.00000, 5.00000]
 
         self.dbl_confocal_acqtime.setValue(acqtimes[np.searchsorted(acqtimes, self.dbl_confocal_acqtime.value(), side='left') - 1])
-
-    def map_start_roi(self):
-        roi = self.vb_map.roi
-        if roi and roi.isVisible():
-            self.confocal_set_roi(roi)
-            self.confocal_start()
-        else:
-            raise Exception('No ROI Selected')
 
     def confocal_live(self, b):
         if b:
@@ -401,133 +404,111 @@ class MainWindow(QtWidgets.QMainWindow):
         self.pixmap_confocal_fig = self.frame_main_confocal.grab()
         processEvents()
 
-    def map_load(self):
-        documents_path = os.path.expanduser(os.path.join('~', 'Documents', 'data_mat'))
-        fd = QtWidgets.QFileDialog(directory=documents_path)
-        targetfile = fd.getOpenFileName(filter='mat files (*.mat)')
-
-        targetfile = targetfile[0]
-        if targetfile != '':
-            matfile = scipy.io.loadmat(targetfile)
-
-            xvals = matfile['xvals'][0]
-            yvals = matfile['yvals'][0]
-            pl = np.squeeze(matfile['pl'])
-
-            self.map_ax_xmin = xvals[0]
-            self.map_ax_xmax = xvals[-1]
-            self.map_ax_ymin = yvals[0]
-            self.map_ax_ymax = yvals[-1]
-
-            self.map_data = pl
-
-            self.linein_map.setText(targetfile.split('/')[-1].split('.mat')[0])
-            self.map_updateplot()
-
-    def map_copy(self):
-        if self.vb_map.roi:
-            self.vb_map.roi.hide()
-
-        self.map_ax_xmin = self.dbl_confocal_x_start.value()
-        self.map_ax_xmax = self.dbl_confocal_x_stop.value()
-        self.map_ax_ymin = self.dbl_confocal_y_start.value()
-        self.map_ax_ymax = self.dbl_confocal_y_stop.value()
-
-        self.map_data = self.confocal_pl[:, :, 0]
-
-        self.linein_map.setText(self.label_filename.text())
-        self.chkbx_map_autolevel.setChecked(True)
-        self.map_updateplot()
-
-    def map_select(self, checked):
+    def confocal_select(self, checked):
         if checked:  # enable cursor
-            self.map_connect(self.map_clicked_drive)
+            self.confocal_vLine.show()
+            self.confocal_hLine.show()
+            self.plt_confocal.scene().sigMouseMoved.connect(self.confocal_mouseMoved)
+            self.plt_confocal.scene().sigMouseClicked.connect(self.confocal_clicked_drive)
         else:  # disable cursor here
-            self.map_disconnect()
+            self.confocal_vLine.hide()
+            self.confocal_hLine.hide()
+            try:
+                self.plt_confocal.scene().sigMouseMoved.disconnect()
+            except TypeError:
+                pass
+            try:
+                self.plt_confocal.scene().sigMouseClicked.disconnect()
+            except TypeError:
+                pass
 
-    def map_updateplot(self):
+    def confocal_clicked_drive(self, event):
+        pos = event.scenePos()
+        if self.plt_confocal.sceneBoundingRect().contains(pos) and event.button() == QtCore.Qt.MouseButton.LeftButton:
+            mousePoint = self.vb_confocal.mapSceneToView(pos)
+            self.dbl_tracker_xpos.setValue(mousePoint.x())
+            self.dbl_tracker_ypos.setValue(mousePoint.y())
+            self.tracker_drive()
+        else:
+            pass
+
+    def confocal_mouseMoved(self, pos):
+        if self.plt_confocal.sceneBoundingRect().contains(pos):
+            mousePoint = self.vb_confocal.mapSceneToView(pos)
+            self.confocal_vLine.setPos(mousePoint.x())
+            self.confocal_hLine.setPos(mousePoint.y())
+
+    def confocal_updatecursor(self):
+        self.confocal_cursor.show()
+        self.confocal_cursor.setData([self.dbl_tracker_xpos.value()], [self.dbl_tracker_ypos.value()])
+        processEvents()
+
+    def camera_updateplot(self):
         with warnings.catch_warnings():
             warnings.simplefilter('ignore', RuntimeWarning)  # for ignoring warnings when plotting NaNs
 
-            if len(self.map_data) > 0:
-                px = (self.map_ax_xmax - self.map_ax_xmin) / (self.map_data.shape[0] - 1)
-                py = (self.map_ax_ymax - self.map_ax_ymin) / (self.map_data.shape[1] - 1)
-                self.qtimg_map.setImage(self.map_data)
-                self.qtimg_map.resetTransform()
-                self.qtimg_map.setRect(self.map_ax_xmin-px/2, self.map_ax_ymin-py/2, (self.map_ax_xmax - self.map_ax_xmin)+px, (self.map_ax_ymax - self.map_ax_ymin)+py)
-
-                # self.hlw_map.setImageItem(self.qtimg_map)
-
+            if len(self.camera_data) > 0:
+                self.qtimg_camera.setImage(self.camera_data)
                 processEvents()
 
-    def map_mouseMoved(self, pos):
-        if self.plt_map.sceneBoundingRect().contains(pos):
-            mousePoint = self.vb_map.mapSceneToView(pos)
-            self.map_vLine.setPos(mousePoint.x())
-            self.map_hLine.setPos(mousePoint.y())
+    def camera_select(self, checked):
+        if checked:  # enable cursor
+            self.camera_vLine.show()
+            self.camera_hLine.show()
+            self.plt_camera.scene().sigMouseMoved.connect(self.camera_mouseMoved)
+            self.plt_camera.scene().sigMouseClicked.connect(self.camera_clicked_drive)
+        else:  # disable cursor here
+            self.camera_vLine.hide()
+            self.camera_hLine.hide()
+            try:
+                self.plt_camera.scene().sigMouseMoved.disconnect()
+            except TypeError:
+                pass
+            try:
+                self.plt_camera.scene().sigMouseClicked.disconnect()
+            except TypeError:
+                pass
 
-    def map_updatecursor(self):
-        self.map_cursor.setData([self.dbl_tracker_xpos.value()], [self.dbl_tracker_ypos.value()])
-        processEvents()
+    def camera_mouseMoved(self, pos):
+        if self.plt_camera.sceneBoundingRect().contains(pos):
+            mousePoint = self.vb_camera.mapSceneToView(pos)
+            self.camera_vLine.setPos(mousePoint.x())
+            self.camera_hLine.setPos(mousePoint.y())
 
-    def map_clicked_drive(self, event):
-        if self.map_clicked_pos(event):
-            self.tracker_drive()
-
-    def map_clicked_pos(self, event):
+    def camera_clicked_drive(self, event):
         pos = event.scenePos()
-        if self.plt_map.sceneBoundingRect().contains(pos) and event.button() == QtCore.Qt.MouseButton.LeftButton:
-            mousePoint = self.vb_map.mapSceneToView(pos)
-            self.dbl_tracker_xpos.setValue(mousePoint.x())
-            self.dbl_tracker_ypos.setValue(mousePoint.y())
-            self.dbl_tracker_zpos.setValue(self.dbl_tracker_zpos.value())
-            return True
+        if self.plt_camera.sceneBoundingRect().contains(pos) and event.button() == QtCore.Qt.MouseButton.LeftButton:
+            mousePoint = self.vb_camera.mapSceneToView(pos)
+            self.dbl_tracker_xpos.setValue(self.dbl_tracker_xpos.value() + mousePoint.x())
+            self.dbl_tracker_ypos.setValue(self.dbl_tracker_ypos.value() + mousePoint.y())
+            self.tracker_drive()
         else:
-            return False
-
-    def map_connect(self, clicked_func):
-        self.map_vLine.show()
-        self.map_hLine.show()
-        self.plt_map.scene().sigMouseMoved.connect(self.map_mouseMoved)
-        self.plt_map.scene().sigMouseClicked.connect(clicked_func)
-
-    def map_disconnect(self):
-        self.map_vLine.hide()
-        self.map_hLine.hide()
-        try:
-            self.plt_map.scene().sigMouseMoved.disconnect()
-        except TypeError:
-            pass
-        try:
-            self.plt_map.scene().sigMouseClicked.disconnect()
-        except TypeError:
             pass
 
-    def map_set_autolevel(self, b):
-        self.hlw_map.item.autoLevel = bool(b)
+    def camera_set_autolevel(self, b):
+        self.hlw_camera.item.autoLevel = bool(b)
 
-    def map_camera_start(self):
-        self.chkbx_map_autolevel.setChecked(True)
+    def camera_start(self):
+        self.chkbx_camera_autolevel.setChecked(False)
+        self.hlw_camera.item.setLevels(0, 255)
         self.thread_camera.start()
-    def map_set_camera_image(self, image):
-        xscale = 1000/128/50
-        yscale = 1000/128/75
-        self.qtimg_map.setImage(image)
-        self.qtimg_map.setRect(-320*xscale, -240*yscale, 640*xscale, 480*yscale)
+
+    def camera_set_image(self, image):
+        self.qtimg_camera.setImage(image)
+        fov = tuple(self.inst_params['camera']['fov'])
+        self.qtimg_camera.setRect(-fov[0]/2, -fov[1]/2, fov[0], fov[1])
 
     def tracker_drive(self):
         xpos = self.dbl_tracker_xpos.value()
         ypos = self.dbl_tracker_ypos.value()
-        zpos = self.dbl_tracker_zpos.value()
 
         self.thread_confocal.set_pos(xpos, ypos)
 
-        self.map_updatecursor()
+        self.confocal_updatecursor()
 
     def tracker_home(self):
         self.dbl_tracker_xpos.setValue(0)
         self.dbl_tracker_ypos.setValue(0)
-        # self.dbl_tracker_zpos.setValue(5)
         self.tracker_drive()
 
     def set_zpos_stepsize(self, value):
@@ -584,23 +565,11 @@ class MainWindow(QtWidgets.QMainWindow):
             if 'int_' in attr:
                 if attr in data['int'].keys():
                     getattr(self, attr).setValue(data['int'][attr])
-            if 'map_ax' in attr:
-                if attr in data['map_ax'].keys():
-                    setattr(self, attr, data['map_ax'][attr])
-
-        try:
-            self.map_data = data['map']
-            self.map_updateplot()
-        except KeyError:
-            print('no confocal map loaded')
-            pass
 
     def export_gui_settings(self):
-        outdata = {'linein': {}, 'dbl': {}, 'int': {}, 'img': [], 'map': [], 'map_ax': {}}
+        outdata = {'linein': {}, 'dbl': {}, 'int': {}, 'img': []}
         if len(self.confocal_pl) > 0:
             outdata['img'] = self.confocal_pl[:, :, 0]
-        if len(self.map_data) > 0:
-            outdata['map'] = self.map_data
         for attr in self.__dict__.keys():
             if 'linein' in attr:
                 outdata['linein'][attr] = getattr(self, attr).text()
@@ -608,8 +577,6 @@ class MainWindow(QtWidgets.QMainWindow):
                 outdata['dbl'][attr] = getattr(self, attr).value()
             elif 'int_' in attr:
                 outdata['int'][attr] = getattr(self, attr).value()
-            elif 'map_ax_' in attr:
-                outdata['map_ax'][attr] = getattr(self, attr)
 
         file_utils.save_config(outdata, path=os.path.expanduser(os.path.join('~', 'Documents', 'exp_config')))
 
@@ -629,7 +596,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.btn_confocal_live.setEnabled(bool_set)
             self.btn_confocal_roi_undo.setEnabled(bool_set)
             self.btn_confocal_start_roi.setEnabled(bool_set)
-            self.btn_map_start_roi.setEnabled(bool_set)
+            self.btn_camera_start_roi.setEnabled(bool_set)
         if section in ['liveapd', 'all']:
             self.btn_liveapd_start.setEnabled(bool_set)
             self.btn_liveapd_clear.setEnabled(bool_set)
@@ -666,13 +633,17 @@ class CameraThread(QThread):
     def __init__(self, mainexp):
         super().__init__()
         self.mainexp = mainexp
+
     def run(self):
+        fps = 10
         self.cap = cv2.VideoCapture(int(self.mainexp.cbox_camera_list.currentText().split(':', 1)[0]))
-        while self.cap.isOpened() and self.mainexp.btn_map_camera.isChecked():
+        while self.cap.isOpened() and self.mainexp.btn_camera_start.isChecked():
             try:
-                _, frame = self.cap.read()
-                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                self.frame_signal.emit(cv2.transpose(cv2.flip(frame, 0))) # transpose and flip to plot on normal coordinates
+                ret, frame = self.cap.read()
+                if ret:
+                    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                    self.frame_signal.emit(cv2.transpose(cv2.flip(frame, 0))) # transpose and flip to plot on normal coordinates
+                time.sleep(1/fps)
             except cv2.error:
                 print('Camera Error!')
                 break

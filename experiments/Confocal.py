@@ -10,13 +10,13 @@ import nidaqmx
 from nidaqmx.constants import AcquisitionType, READ_ALL_AVAILABLE
 
 class Confocal(ExpThread.ExpThread):
-    '''MODIFIED TO USE ANALOG SIGNAL FROM PHOTODIODE INSTEAD'''
     # Define signals for communicating with mainexp
     signal_confocal_grab_screenshots = pyqtSignal()
 
     signal_confocal_initplot = pyqtSignal()
     signal_confocal_updateplot = pyqtSignal(int, int)
     signal_focus_score_updateplot = pyqtSignal(int)
+    signal_tracker_home = pyqtSignal()
 
     def __init__(self, mainexp, wait_condition):
         super().__init__(mainexp, wait_condition)
@@ -40,6 +40,7 @@ class Confocal(ExpThread.ExpThread):
         self.signal_confocal_initplot.connect(mainexp.confocal_initplot)
         self.signal_confocal_updateplot.connect(mainexp.confocal_updateplot)
         self.signal_focus_score_updateplot.connect(mainexp.focus_score_updateplot)
+        self.signal_tracker_home.connect(self.mainexp.tracker_home)
 
         self.plane_coef = [0, 0, 1, 5]  # coefficients for Ax + By + Cz = D for autoZ
 
@@ -409,6 +410,7 @@ class Confocal(ExpThread.ExpThread):
         self.mainexp.set_gui_btn_enable('all', True)
         self.mainexp.set_gui_input_enable('confocal', True)
         self.mainexp.btn_confocal_stop.setEnabled(False)
+        self.signal_tracker_home.emit()
 
     def save(self, ext=False):
         if self.isRunning() and not ext:
