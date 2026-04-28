@@ -16,11 +16,10 @@ DeviceManagerCLI.BuildDeviceList() # todo: check whether this works
 class PFM450E:
     def __init__(self, serialNumber):
         self.current_pos = 0.0
-
+        serialNumber = str(serialNumber)
         try:
             self.device = BenchtopPrecisionPiezo.CreateBenchtopPiezo(serialNumber)
             self.device.Connect(serialNumber)
-
             # Because this is a benchtop controller we need a channel object
             self.channel = self.device.GetChannel(1)
 
