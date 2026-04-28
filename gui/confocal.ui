@@ -1173,7 +1173,7 @@
        <string>Image</string>
       </property>
      </widget>
-     <widget class="QDoubleSpinBox" name="dbl_tracker_zrange">
+     <widget class="QDoubleSpinBox" name="dbl_tracker_zrng">
       <property name="geometry">
        <rect>
         <x>120</x>

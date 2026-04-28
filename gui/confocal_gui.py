@@ -61,8 +61,15 @@ class MainWindow(QtWidgets.QMainWindow):
         '''WORKER THREADS INITIALIZATION'''
         self.thread_confocal = exp.Confocal.Confocal(self, self.wait_confocal)
         self.thread_liveapd = exp.APD.CountMonitor(self, self.wait_liveapd)
+        self.thread_tracker = exp.Tracker.Tracker(self)
 
         '''CONFOCAL'''
+        self.piezo = ThorlabsPiezo.PFM450E(self.inst_params['piezo']['sn'])
+        self.piezo.SetPosition(0.0)
+        self.cbox_zpos_stepsize.addItems(['Z: 10 μm', 'Z:  1 μm', 'Z: 0.1 μm'])
+        self.cbox_zpos_stepsize.currentTextChanged.connect(self.set_zpos_stepsize)
+        self.dbl_tracker_zpos.valueChanged.connect(self.piezo.SetPosition)
+
         self.btn_confocal_mode_xy.setChecked(True)
         self.btn_confocal_mode = QtWidgets.QButtonGroup()
         self.btn_confocal_mode.addButton(self.btn_confocal_mode_xy, 0)
@@ -81,6 +88,14 @@ class MainWindow(QtWidgets.QMainWindow):
         self.chkbx_confocal_autolevel.stateChanged.connect(self.confocal_set_autolevel)
         self.btn_confocal_acqtime_inc.clicked.connect(self.confocal_acqtime_inc)
         self.btn_confocal_acqtime_dec.clicked.connect(self.confocal_acqtime_dec)
+
+        self.btn_tracker_mode_pixel.setChecked(True)
+        self.btn_tracker_mode = QtWidgets.QButtonGroup()
+        self.btn_tracker_mode.addButton(self.btn_tracker_mode_pixel, 0)
+        self.btn_tracker_mode.addButton(self.btn_tracker_mode_image, 1)
+        self.btn_tracker_home.clicked.connect(self.tracker_home)
+        self.btn_tracker_autofocus.clicked.connect(self.tracker_start)
+
 
         self.confocal_mode = 0
         self.confocal_rngx = []
@@ -125,7 +140,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.btn_confocal_select.clicked.connect(self.confocal_select)
 
-        '''CAMERA PLOTS'''
+        '''CAMERA CONTROL'''
         self.glw_camera = pg.GraphicsLayoutWidget()
         self.glw_camera.addItem(self.plt_camera, 0, 0)
         self.hlw_camera = mainexp_widgets.CustomLUTWidget(image=self.qtimg_camera)
@@ -154,18 +169,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.camera_data = np.array([])
 
-
-        '''CONFOCAL CONTROL'''
-        self.piezo = ThorlabsPiezo.PFM450E(self.inst_params['piezo']['sn'])
-        self.piezo.SetPosition(0.0)
-
-        self.cbox_zpos_stepsize.addItems(['Z: 10 μm', 'Z:  1 μm', 'Z: 0.1 μm'])
-        self.cbox_zpos_stepsize.currentTextChanged.connect(self.set_zpos_stepsize)
-        self.dbl_tracker_zpos.valueChanged.connect(self.piezo.SetPosition)
-
-        self.btn_tracker_home.clicked.connect(self.tracker_home)
-
-        '''Camera Thread'''
         self.cbox_camera_list.addItems([str(cam).rsplit(' ', 1)[0] for cam in enumerate_cameras(cv2.CAP_MSMF)])
         self.thread_camera = CameraThread(self)
         self.thread_camera.frame_signal.connect(self.camera_set_image)
@@ -511,6 +514,15 @@ class MainWindow(QtWidgets.QMainWindow):
         self.dbl_tracker_ypos.setValue(0)
         self.tracker_drive()
 
+    def tracker_start(self):
+        self.plt_liveapd.setVisible(False)
+        self.plt_focus_score.setVisible(True)
+        self.thread_tracker.start()
+
+    def tracker_updateplot(self):
+        self.curve_focus_score.setData(self.focus_zpos, self.focus_score)
+        self.curve_focus_score_fit.setData(self.focus_zpos_fit, self.focus_score_fit)
+
     def set_zpos_stepsize(self, value):
         stepsize = float(value.split()[1])
         self.dbl_tracker_zpos.setSingleStep(stepsize)
@@ -596,10 +608,17 @@ class MainWindow(QtWidgets.QMainWindow):
             self.btn_confocal_live.setEnabled(bool_set)
             self.btn_confocal_roi_undo.setEnabled(bool_set)
             self.btn_confocal_start_roi.setEnabled(bool_set)
+            self.btn_confocal_acqtime_inc.setEnabled(bool_set)
+            self.btn_confocal_acqtime_dec.setEnabled(bool_set)
+            self.btn_confocal_select.setEnabled(bool_set)
+            self.btn_camera_select.setEnabled(bool_set)
             self.btn_camera_start_roi.setEnabled(bool_set)
         if section in ['liveapd', 'all']:
             self.btn_liveapd_start.setEnabled(bool_set)
             self.btn_liveapd_clear.setEnabled(bool_set)
+        if section in ['tracker', 'all']:
+            self.btn_tracker_home.setEnabled(bool_set)
+            self.btn_tracker_start.setEnabled(bool_set)
 
     def set_gui_input_enable(self, section, bool_set):
         if section in ['confocal', 'all']:
