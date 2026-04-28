@@ -1125,7 +1125,7 @@
       <bool>true</bool>
      </property>
     </widget>
-    <widget class="QPushButton" name="btn_tracker_autofocus_2">
+    <widget class="QPushButton" name="btn_task_yes">
      <property name="geometry">
       <rect>
        <x>600</x>
@@ -1138,7 +1138,7 @@
       <string>Yes</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="btn_tracker_autofocus_3">
+    <widget class="QPushButton" name="btn_task_no">
      <property name="geometry">
       <rect>
        <x>600</x>
@@ -1151,7 +1151,7 @@
       <string>No</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="btn_tracker_autofocus_4">
+    <widget class="QPushButton" name="btn_task_stop">
      <property name="geometry">
       <rect>
        <x>600</x>
