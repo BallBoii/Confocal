@@ -24,7 +24,8 @@ class CountMonitor(ExpThread.ExpThread):
 
     def run(self):
         self.mainexp.set_gui_btn_enable('all', False)
-        self.mainexp.btn_confocal_start.setEnabled(True) # mainexp.confocal_start() can override and stop CountMonitor
+        self.mainexp.btn_confocal_start.setEnabled(True) # thread_confocal.run() can override and stop CountMonitor
+        self.mainexp.btn_tracker_autofocus.setEnabled(True) # thread_tracker.run() can override and stop CountMonitor
         self.mainexp.btn_liveapd_stop.setEnabled(True)
         self.mainexp.btn_liveapd_clear.setEnabled(True)
 

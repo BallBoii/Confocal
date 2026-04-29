@@ -3,7 +3,7 @@ import numpy as np
 import time, nidaqmx
 from nidaqmx.constants import AcquisitionType
 from scipy.signal import savgol_filter
-from scipy.interpolate import UnivariateSpline
+from scipy.interpolate import UnivariateSpline, interp1d
 
 from . import ExpThread
 
@@ -23,7 +23,6 @@ class Tracker(ExpThread.ExpThread):
         self.signal_tracker_updateplot.connect(self.mainexp.tracker_updateplot)
 
     def get_pl(self, acqtime):
-        # todo: verify nidaqmx function
         with nidaqmx.Task('counter') as ci_task, nidaqmx.Task('clock') as clk_task:
             # 1. Configure the counter to be gated/clocked by t
             ci_task.ci_channels.add_ci_count_edges_chan(self.ctrapd['dev'])
@@ -63,13 +62,24 @@ class Tracker(ExpThread.ExpThread):
     def find_focus_max(self, zpos, scores):
         """Smooths the focus curve and identifies the peak position."""
 
+        # 0. Interpolate if too few points
+        if len(zpos) < 51:
+            # Need at least 4 points for 'cubic' interpolation, fallback to 'linear' if fewer
+            kind = 'cubic' if len(zpos) > 3 else 'linear'
+            f = interp1d(zpos, scores, kind=kind)
+            z_fit = np.linspace(zpos[0], zpos[-1], 51)
+            scores_fit = f(z_fit)
+        else:
+            z_fit = zpos
+            scores_fit = scores
+
         # 1. Apply Savitzky-Golay smoothing
         # window_length should be odd; adjust based on your typical peak width
-        window = 7 if len(scores) > 7 else (len(scores) // 2 * 2 - 1)
+        window = 7 if len(scores_fit) > 7 else (len(scores_fit) // 2 * 2 - 1)
         if window < 3:
-            smoothed_scores = scores
+            smoothed_scores = scores_fit
         else:
-            smoothed_scores = savgol_filter(scores, window_length=window, polyorder=2)
+            smoothed_scores = savgol_filter(scores_fit, window_length=window, polyorder=2)
 
         # 2. Find the index of the maximum in the smoothed data
         max_idx = np.argmax(smoothed_scores)
@@ -77,22 +87,27 @@ class Tracker(ExpThread.ExpThread):
         # 3. Refine the peak using a Spline (Sub-pixel precision)
         # This creates a continuous function from the discrete points
         try:
-            spline = UnivariateSpline(zpos, smoothed_scores - np.max(smoothed_scores) + 1e-9, s=0)
+            spline = UnivariateSpline(z_fit, smoothed_scores - np.max(smoothed_scores) + 1e-9, s=0)
             # We look for roots of the derivative to find the local maximum
             roots = spline.derivative().roots()
 
             # Find the root closest to our argmax
             if len(roots) > 0:
-                z_best = roots[np.argmin(np.abs(roots - zpos[max_idx]))]
+                z_best = roots[np.argmin(np.abs(roots - z_fit[max_idx]))]
             else:
-                z_best = zpos[max_idx]
+                z_best = z_fit[max_idx]
         except:
             # Fallback to simple argmax if spline fails
-            z_best = zpos[max_idx]
+            z_best = z_fit[max_idx]
 
-        return z_best, smoothed_scores
+        return z_best, smoothed_scores, z_fit
 
     def run(self):
+        if self.mainexp.thread_liveapd.isRunning():
+            self.mainexp.thread_liveapd.cancel = True
+            self.mainexp.thread_liveapd.wait()
+            self.wait_for_mainexp()
+
         self.mainexp.set_gui_btn_enable('all', False)
 
         z0 = self.mainexp.dbl_tracker_zpos.value()
@@ -115,13 +130,17 @@ class Tracker(ExpThread.ExpThread):
             self.mainexp.focus_score[i] = pl
             self.signal_tracker_updateplot.emit()
 
-        # todo: check autofocus logic to set final z
-        z_best, focus_score_fit = self.find_focus_max(self.mainexp.focus_zpos, self.mainexp.focus_score)
+        z_best, focus_score_fit, focus_zpos_fit = self.find_focus_max(self.mainexp.focus_zpos, self.mainexp.focus_score)
 
-        self.mainexp.dbl_tracker_zpos.setValue(z_best)
-        time.sleep(PIEZO_DELAY)
-        self.mainexp.focus_zpos_fit = zs
+        self.mainexp.focus_zpos_fit = focus_zpos_fit
         self.mainexp.focus_score_fit = focus_score_fit
+        self.signal_tracker_updateplot.emit()
+
+        self.mainexp.piezo.SetPosition(z_best)
+        time.sleep(PIEZO_DELAY)
+        self.mainexp.dbl_tracker_zpos.blockSignals(True)
+        self.mainexp.dbl_tracker_zpos.setValue(z_best)
+        self.mainexp.dbl_tracker_zpos.blockSignals(False)
 
         self.mainexp.set_gui_btn_enable('all', True)
 

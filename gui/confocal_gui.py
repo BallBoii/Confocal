@@ -155,7 +155,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.camera_vLine.hide()
         self.camera_hLine.hide()
 
-        self.camera_cursor = pg.ScatterPlotItem(pen=pg.mkPen('w', width=2), brush=None, symbol='o', size=7)
+        self.camera_cursor = pg.ScatterPlotItem(pen=pg.mkPen('r', width=0), brush='r', symbol='+', size=10)
         self.camera_cursor.setData([0], [0])
 
         self.plt_camera.addItem(self.camera_cursor)
@@ -196,9 +196,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.focus_zpos_fit = np.array([])
         self.plt_focus_score.setVisible(False)
 
-        '''ILLUM CONTROL'''
+        '''ILLUMINATION CONTROL'''
         self.btn_illum_laser.toggled.connect(lambda b: self.illum_set('laser', b))
         self.btn_illum_led.toggled.connect(lambda b: self.illum_set('led', b))
+        self.illum_set('laser', False)
+        self.illum_set('led', False)
 
         '''SET UP ALL GUI'''
         # Set up ranges and step limits in the gui fields
@@ -239,6 +241,13 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.pixmap_confocal_graph = None
         self.pixmap_confocal_fig = None
+
+        self.tracker_home()
+
+        self.piezo.SetPosition(225.0)
+        self.dbl_tracker_zpos.blockSignals(True)
+        self.dbl_tracker_zpos.setValue(225.0)
+        self.dbl_tracker_zpos.blockSignals(False)
 
     def illum_set(self, source, state):
         """Sets the digital output for the laser or LED."""
@@ -457,11 +466,6 @@ class MainWindow(QtWidgets.QMainWindow):
             self.confocal_vLine.setPos(mousePoint.x())
             self.confocal_hLine.setPos(mousePoint.y())
 
-    def confocal_updatecursor(self):
-        self.confocal_cursor.show()
-        self.confocal_cursor.setData([self.dbl_tracker_xpos.value()], [self.dbl_tracker_ypos.value()])
-        processEvents()
-
     def camera_updateplot(self):
         with warnings.catch_warnings():
             warnings.simplefilter('ignore', RuntimeWarning)  # for ignoring warnings when plotting NaNs
@@ -498,8 +502,8 @@ class MainWindow(QtWidgets.QMainWindow):
         pos = event.scenePos()
         if self.plt_camera.sceneBoundingRect().contains(pos) and event.button() == QtCore.Qt.MouseButton.LeftButton:
             mousePoint = self.vb_camera.mapSceneToView(pos)
-            self.dbl_tracker_xpos.setValue(self.dbl_tracker_xpos.value() + mousePoint.x())
-            self.dbl_tracker_ypos.setValue(self.dbl_tracker_ypos.value() + mousePoint.y())
+            self.dbl_tracker_xpos.setValue(mousePoint.x())
+            self.dbl_tracker_ypos.setValue(mousePoint.y())
             self.tracker_drive()
         else:
             pass
@@ -513,9 +517,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.thread_camera.start()
 
     def camera_set_image(self, image):
+        xpos = self.dbl_tracker_xpos.value()
+        ypos = self.dbl_tracker_ypos.value()
         self.qtimg_camera.setImage(image)
         fov = tuple(self.inst_params['camera']['fov'])
-        self.qtimg_camera.setRect(-fov[0]/2, -fov[1]/2, fov[0], fov[1])
+        self.qtimg_camera.setRect(xpos-fov[0]/2, ypos-fov[1]/2, fov[0], fov[1])
 
     def tracker_drive(self):
         xpos = self.dbl_tracker_xpos.value()
@@ -523,7 +529,14 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.thread_confocal.set_pos(xpos, ypos)
 
-        self.confocal_updatecursor()
+        self.confocal_cursor.show()
+        self.confocal_cursor.setData([xpos], [ypos])
+
+        self.camera_cursor.setData([xpos], [ypos])
+        # fov = tuple(self.inst_params['camera']['fov'])
+        # self.qtimg_camera.resetTransform()
+        # self.qtimg_camera.setRect(xpos-fov[0]/2, ypos-fov[1]/2, fov[0], fov[1])
+        processEvents()
 
     def tracker_home(self):
         self.dbl_tracker_xpos.setValue(0)
@@ -634,7 +647,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.btn_liveapd_clear.setEnabled(bool_set)
         if section in ['tracker', 'all']:
             self.btn_tracker_home.setEnabled(bool_set)
-            self.btn_tracker_start.setEnabled(bool_set)
+            self.btn_tracker_autofocus.setEnabled(bool_set)
 
     def set_gui_input_enable(self, section, bool_set):
         if section in ['confocal', 'all']:
@@ -652,6 +665,9 @@ class MainWindow(QtWidgets.QMainWindow):
             self.confocal_zstack_enable(bool(self.int_confocal_z_numdivs.value()) and bool_set)
 
     def closeEvent(self, *args, **kwargs):
+        if self.thread_camera.isRunning():
+            self.btn_camera_start.setChecked(False)
+            time.sleep(0.5)
         self.piezo.Disconnect()
         self.export_gui_settings()
 
