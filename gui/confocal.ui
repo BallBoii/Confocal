@@ -782,9 +782,9 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>448</y>
+       <y>438</y>
        <width>690</width>
-       <height>171</height>
+       <height>181</height>
       </rect>
      </property>
     </widget>
@@ -794,7 +794,7 @@
        <x>10</x>
        <y>48</y>
        <width>691</width>
-       <height>391</height>
+       <height>381</height>
       </rect>
      </property>
      <layout class="QGridLayout" name="grid_camera"/>
