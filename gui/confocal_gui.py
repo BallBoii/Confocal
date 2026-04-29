@@ -51,6 +51,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.mutex = QtCore.QMutex()
         self.wait_confocal = QtCore.QWaitCondition()
         self.wait_liveapd = QtCore.QWaitCondition()
+        self.wait_tracker = QtCore.QWaitCondition()
 
         '''INSTRUMENT INITIALIZATION'''
         instpath = os.path.expanduser(os.path.join('~', 'Documents', 'exp_config', 'confocal_params.yaml'))
@@ -62,7 +63,7 @@ class MainWindow(QtWidgets.QMainWindow):
         '''WORKER THREADS INITIALIZATION'''
         self.thread_confocal = exp.Confocal.Confocal(self, self.wait_confocal)
         self.thread_liveapd = exp.APD.CountMonitor(self, self.wait_liveapd)
-        self.thread_tracker = exp.Tracker.Tracker(self)
+        self.thread_tracker = exp.Tracker.Tracker(self, self.wait_tracker)
 
         '''CONFOCAL'''
         self.piezo = ThorlabsPiezo.PFM450E(self.inst_params['piezo']['sn'])

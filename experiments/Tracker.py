@@ -14,8 +14,8 @@ class Tracker(ExpThread.ExpThread):
     # Define signals for communicating with mainexp
     signal_tracker_updateplot = pyqtSignal()
 
-    def __init__(self, mainexp):  # Tracker does not need wait_condition
-        super().__init__(mainexp)
+    def __init__(self, mainexp, wait_condition):
+        super().__init__(mainexp, wait_condition)
 
         self.ctrapd = self.mainexp.inst_params['ctrapd']
         self.ctrclk = self.mainexp.inst_params['ctrclk']
