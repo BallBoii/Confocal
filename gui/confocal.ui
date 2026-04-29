@@ -1243,49 +1243,63 @@
  </customwidgets>
  <tabstops>
   <tabstop>linein_sample_name</tabstop>
-  <tabstop>chkbx_autosave</tabstop>
-  <tabstop>dbl_confocal_acqtime</tabstop>
-  <tabstop>int_confocal_live_avg</tabstop>
   <tabstop>btn_confocal_start</tabstop>
   <tabstop>btn_confocal_stop</tabstop>
   <tabstop>btn_confocal_live</tabstop>
   <tabstop>btn_confocal_save</tabstop>
+  <tabstop>dbl_confocal_acqtime</tabstop>
+  <tabstop>int_confocal_live_avg</tabstop>
   <tabstop>btn_confocal_acqtime_dec</tabstop>
   <tabstop>btn_confocal_acqtime_inc</tabstop>
+  <tabstop>chkbx_autosave</tabstop>
+  <tabstop>btn_confocal_mode_xy</tabstop>
+  <tabstop>btn_confocal_mode_yx</tabstop>
   <tabstop>dbl_confocal_x_start</tabstop>
   <tabstop>dbl_confocal_x_stop</tabstop>
   <tabstop>int_confocal_x_numdivs</tabstop>
+  <tabstop>btn_confocal_pxsync</tabstop>
   <tabstop>dbl_confocal_y_start</tabstop>
   <tabstop>dbl_confocal_y_stop</tabstop>
   <tabstop>int_confocal_y_numdivs</tabstop>
-  <tabstop>btn_confocal_pxsync</tabstop>
   <tabstop>dbl_confocal_z_start</tabstop>
   <tabstop>dbl_confocal_z_stop</tabstop>
   <tabstop>int_confocal_z_numdivs</tabstop>
   <tabstop>btn_confocal_start_roi</tabstop>
   <tabstop>btn_confocal_roi_undo</tabstop>
   <tabstop>btn_confocal_start_preset1</tabstop>
-  <tabstop>btn_confocal_start_preset2</tabstop>
   <tabstop>dbl_confocal_preset1</tabstop>
+  <tabstop>btn_confocal_start_preset2</tabstop>
   <tabstop>dbl_confocal_preset2</tabstop>
+  <tabstop>int_confocal_cmax</tabstop>
+  <tabstop>int_confocal_cmin</tabstop>
+  <tabstop>btn_confocal_select</tabstop>
   <tabstop>chkbx_confocal_autolevel</tabstop>
-  <tabstop>btn_confocal_mode_xy</tabstop>
-  <tabstop>btn_confocal_mode_yx</tabstop>
   <tabstop>cbox_camera_list</tabstop>
   <tabstop>btn_camera_start</tabstop>
   <tabstop>btn_camera_start_roi</tabstop>
   <tabstop>btn_camera_select</tabstop>
-  <tabstop>dbl_tracker_xpos</tabstop>
-  <tabstop>dbl_tracker_ypos</tabstop>
-  <tabstop>dbl_tracker_zpos</tabstop>
-  <tabstop>cbox_zpos_stepsize</tabstop>
-  <tabstop>btn_tracker_home</tabstop>
   <tabstop>chkbx_camera_autolevel</tabstop>
   <tabstop>glw_liveapd</tabstop>
   <tabstop>dbl_liveapd_acqtime</tabstop>
   <tabstop>btn_liveapd_start</tabstop>
   <tabstop>btn_liveapd_stop</tabstop>
   <tabstop>btn_liveapd_clear</tabstop>
+  <tabstop>dbl_tracker_xpos</tabstop>
+  <tabstop>dbl_tracker_ypos</tabstop>
+  <tabstop>dbl_tracker_zpos</tabstop>
+  <tabstop>btn_tracker_home</tabstop>
+  <tabstop>cbox_zpos_stepsize</tabstop>
+  <tabstop>btn_illum_laser</tabstop>
+  <tabstop>btn_illum_led</tabstop>
+  <tabstop>dbl_tracker_zrng</tabstop>
+  <tabstop>int_tracker_numdivs</tabstop>
+  <tabstop>dbl_tracker_acqtime</tabstop>
+  <tabstop>btn_tracker_autofocus</tabstop>
+  <tabstop>btn_tracker_mode_pixel</tabstop>
+  <tabstop>btn_tracker_mode_image</tabstop>
+  <tabstop>btn_task_yes</tabstop>
+  <tabstop>btn_task_no</tabstop>
+  <tabstop>btn_task_stop</tabstop>
  </tabstops>
  <resources/>
  <connections/>
