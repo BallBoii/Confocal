@@ -209,3 +209,147 @@ class CustomLUTItem(pg.HistogramLUTItem):
             mx = h[0][-1]
             self.region.setRegion([mn, mx])
         self.updateImageRegion()
+
+class CustomProgressBar(QtWidgets.QWidget):
+    stepsChanged = QtCore.pyqtSignal(list)
+    valueChanged = QtCore.pyqtSignal(int)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        self._labels = []
+        self._value = 0
+
+        self._animation = QtCore.QVariantAnimation(
+            startValue=0.0, endValue=1.0, duration=500
+        )
+        self._animation.valueChanged.connect(self.update)
+
+    def get_labels(self):
+        return self._labels
+
+    def set_labels(self, labels):
+        self._labels = labels[:]
+        self.stepsChanged.emit(self._labels)
+
+    labels = QtCore.pyqtProperty(
+        list, fget=get_labels, fset=set_labels, notify=stepsChanged
+    )
+
+    def get_value(self):
+        return self._value
+
+    def set_value(self, value):
+        if 0 <= value < len(self.labels) + 1:
+            self._value = value
+            self.valueChanged.emit(value)
+            self.update()
+            if self.value < len(self.labels):
+                self._animation.start()
+
+    value = QtCore.pyqtProperty(int, fget=get_value, fset=set_value, notify=valueChanged)
+
+    def sizeHint(self):
+        return QtCore.QSize(150, 320)
+
+    def paintEvent(self, event):
+        grey = QtGui.QColor("#777")
+        grey2 = QtGui.QColor("#dfe3e4")
+        cyan = QtGui.QColor("#00bcd4")
+        white = QtGui.QColor("#fff")
+
+        painter = QtGui.QPainter(self)
+        painter.setRenderHints(QtGui.QPainter.RenderHint.Antialiasing)
+
+        line_width = 5
+        offset = 10
+
+        # Background fill removed so the widget inherits the parent's background natively
+
+        number_of_steps = len(self.labels)
+
+        if number_of_steps == 0:
+            return
+
+        track_rect = QtCore.QRect(0, 0, line_width, self.height())
+        track_rect.adjust(0, offset, 0, -offset)
+
+        x_margin = 20
+        track_rect.moveCenter(QtCore.QPoint(x_margin, self.rect().center().y()))
+
+        step_height = track_rect.height() / number_of_steps
+
+        first_y = track_rect.top() + step_height / 2
+        last_y = track_rect.bottom() - step_height / 2
+
+        bg_line_rect = QtCore.QRect(0, 0, line_width, int(last_y - first_y))
+        bg_line_rect.moveCenter(track_rect.center())
+        painter.fillRect(bg_line_rect, grey2)
+
+        x = track_rect.center().x()
+        y = first_y
+        radius = 10
+
+        font_text = painter.font()
+        r = QtCore.QRect(0, 0, int(1.5 * radius), int(1.5 * radius))
+
+        for i, text in enumerate(self.labels, 1):
+            r.moveCenter(QtCore.QPoint(int(x), int(y)))
+
+            if i <= self.value:
+                h = (
+                    step_height
+                    if i < self.value
+                    else float(self._animation.currentValue()) * step_height
+                )
+                r_busy = QtCore.QRect(0, 0, line_width, int(h))
+                r_busy.moveCenter(track_rect.center())
+
+                if i < number_of_steps:
+                    r_busy.moveTop(int(y))
+                    painter.fillRect(r_busy, cyan)
+
+                # Draw the cyan checked node
+                pen = QtGui.QPen(cyan)
+                pen.setWidth(3)
+                painter.setPen(pen)
+                painter.setBrush(cyan)
+                painter.drawEllipse(r)
+
+                # Draw a native checkmark so no external fonts are required
+                check_pen = QtGui.QPen(white)
+                check_pen.setWidth(2)
+                check_pen.setCapStyle(QtCore.Qt.PenCapStyle.RoundCap)
+                check_pen.setJoinStyle(QtCore.Qt.PenJoinStyle.RoundJoin)
+                painter.setPen(check_pen)
+
+                cx = r.center().x()
+                cy = r.center().y()
+                painter.drawLine(cx - 3, cy, cx - 1, cy + 3)
+                painter.drawLine(cx - 1, cy + 3, cx + 4, cy - 4)
+
+            else:
+                # Draw the unchecked/active node
+                is_active = (self.value + 1) == i
+                pen = QtGui.QPen(grey if is_active else grey2)
+                pen.setWidth(3)
+                painter.setPen(pen)
+                painter.setBrush(white)
+                painter.drawEllipse(r)
+                painter.setPen(cyan if is_active else QtGui.QColor("black"))
+
+            text_rect = QtCore.QRect(
+                int(x + 2 * radius),
+                int(y - radius),
+                int(self.width() - x - 2 * radius),
+                int(2 * radius)
+            )
+
+            painter.setFont(font_text)
+            painter.drawText(
+                text_rect,
+                QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignVCenter,
+                text
+            )
+
+            y += step_height

@@ -1,6 +1,7 @@
 from PyQt6 import QtCore, QtWidgets, uic
 from PyQt6.QtCore import QThread, pyqtSignal as Signal
 import cv2
+from click import progressbar
 from cv2_enumerate_cameras import enumerate_cameras
 
 # system imports
@@ -203,6 +204,15 @@ class MainWindow(QtWidgets.QMainWindow):
         self.illum_set('laser', False)
         self.illum_set('led', False)
 
+        '''NAVIGATION PROGRESS BAR'''
+        self.progressbar = mainexp_widgets.CustomProgressBar()
+        self.progressbar.labels = ['Load Plate', 'Check Laser Position', 'Autofocus', 'Image Check', 'Confocal Scan', 'Check Land Areas', 'Image Analysis']
+
+        self.btn_task_yes.clicked.connect(self.task_forward)
+        self.btn_task_no.clicked.connect(self.task_backward) # todo
+
+        self.layout_navigator.addWidget(self.progressbar)
+
         '''SET UP ALL GUI'''
         # Set up ranges and step limits in the gui fields
         if os.path.isfile(os.path.expanduser(os.path.join('~', 'Documents', 'exp_config', 'guifield_settings_confocal.yaml'))):
@@ -243,7 +253,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.pixmap_confocal_graph = None
         self.pixmap_confocal_fig = None
 
-        self.tracker_home()
+        try:
+            self.tracker_home()
+        except nidaqmx.errors.DaqError:
+            pass
 
         self.piezo.SetPosition(225.0)
         self.dbl_tracker_zpos.blockSignals(True)
@@ -594,6 +607,57 @@ class MainWindow(QtWidgets.QMainWindow):
         else:
             self.plt_focus_score.setVisible(False)
             self.plt_liveapd.setVisible(True)
+
+    def task_forward(self):
+        value = (self.progressbar.value + 1) % (len(self.progressbar.labels) + 1)
+        self.progressbar.value = value
+        if value == 0:
+            # Load Plate
+            if not self.thread_camera.isRunning():
+                self.camera_start()
+            self.illum_set('laser', False)
+            self.illum_set('led', True)
+            self.piezo.SetPosition(225.0)
+        elif value == 1:
+            # Check Laser Position
+            self.illum_set('laser', True)
+            self.piezo.SetPosition(225.0)
+        elif value == 2:
+            # Autofocus
+            self.tracker_start()
+        elif value == 3:
+            # Image Check
+            self.illum_set('laser', False)
+            self.illum_set('led', True)
+        elif value == 4:
+            # Confocal Scan
+            self.illum_set('laser', True)
+            self.illum_set('led', False)
+            self.confocal_start()
+            # todo: set illum automatically
+        elif value == 5:
+            # Check Land Areas
+            self.illum_set('laser', False)
+            self.illum_set('led', True)
+            print('Check Land Areas')
+        elif value == 6:
+            # Image Analysis
+            print('Image Analysis')
+        elif value == 7:
+            print('Image Analysis Done')
+
+    def task_backward(self):
+        value = self.progressbar.value
+        if value in [2, 3, 4]:
+            self.progressbar.value = 1
+            self.illum_set('laser', True)
+            self.illum_set('led', True)
+            self.piezo.SetPosition(225.0)
+        else:
+            self.progressbar.value = 0
+            self.illum_set('laser', False)
+            self.illum_set('led', True)
+            self.piezo.SetPosition(225.0)
 
     def import_gui_settings(self, data):
         # refill the linein, double, and integer fields in the gui

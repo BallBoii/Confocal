@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1445</width>
-    <height>880</height>
+    <width>1617</width>
+    <height>887</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -1221,13 +1221,40 @@
     <zorder>btn_liveapd_stop</zorder>
     <zorder>btn_liveapd_start</zorder>
    </widget>
+   <widget class="QFrame" name="frame_navigator">
+    <property name="geometry">
+     <rect>
+      <x>1450</x>
+      <y>10</y>
+      <width>161</width>
+      <height>821</height>
+     </rect>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::Shape::StyledPanel</enum>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Shadow::Raised</enum>
+    </property>
+    <widget class="QWidget" name="verticalLayoutWidget">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>0</y>
+       <width>161</width>
+       <height>821</height>
+      </rect>
+     </property>
+     <layout class="QVBoxLayout" name="layout_navigator"/>
+    </widget>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1445</width>
+     <width>1617</width>
      <height>33</height>
     </rect>
    </property>
