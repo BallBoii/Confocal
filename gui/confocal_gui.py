@@ -802,6 +802,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def set_gui_defaults(self):
         self.set_gui_btn_enable('all', True)
+        self.set_gui_btn_enable('automation', False)
         self.set_gui_input_enable('all', True)
         self.btn_confocal_live.setChecked(False)
         # Disable the stop buttons
