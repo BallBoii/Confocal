@@ -809,45 +809,53 @@ class MainWindow(QtWidgets.QMainWindow):
         self.btn_liveapd_stop.setEnabled(self.thread_liveapd.isRunning())
 
     def set_gui_btn_enable(self, section, bool_set):
-        if section in ['confocal', 'all']:
-            self.btn_confocal_start.setEnabled(bool_set)
-            self.btn_confocal_start_preset1.setEnabled(bool_set)
-            self.btn_confocal_start_preset2.setEnabled(bool_set)
-            self.btn_confocal_live.setEnabled(bool_set)
-            self.btn_confocal_roi_undo.setEnabled(bool_set)
-            self.btn_confocal_start_roi.setEnabled(bool_set)
-            self.btn_confocal_acqtime_inc.setEnabled(bool_set)
-            self.btn_confocal_acqtime_dec.setEnabled(bool_set)
-            self.btn_confocal_select.setEnabled(bool_set)
-            self.btn_camera_select.setEnabled(bool_set)
-            self.btn_camera_start_roi.setEnabled(bool_set)
-        if section in ['liveapd', 'all']:
-            self.btn_liveapd_start.setEnabled(bool_set)
-            self.btn_liveapd_clear.setEnabled(bool_set)
-        if section in ['tracker', 'all']:
-            self.btn_tracker_home.setEnabled(bool_set)
-            self.btn_tracker_autofocus.setEnabled(bool_set)
-        if section in ['analysis', 'all']:
-            self.btn_task_analyze.setEnabled(bool_set)
-        if section in ['automation', 'all']:
-            self.btn_task_yes.setEnabled(bool_set)
-            self.btn_task_no.setEnabled(bool_set)
-            self.btn_task_reset.setEnabled(bool_set)
+        groups = {
+            'confocal': [self.btn_confocal_start, self.btn_confocal_live,
+                         self.btn_confocal_start_preset1, self.btn_confocal_start_preset2,
+                         self.btn_confocal_roi_undo, self.btn_confocal_start_roi,
+                         self.btn_confocal_acqtime_inc, self.btn_confocal_acqtime_dec,
+                         self.btn_confocal_select, self.btn_camera_select,
+                         self.btn_camera_start_roi],
+            'liveapd': [self.btn_liveapd_start, self.btn_liveapd_clear],
+            'tracker': [self.btn_tracker_home, self.btn_tracker_autofocus],
+            'analysis': [self.btn_task_analyze],
+            'automation': [self.btn_task_yes, self.btn_task_no, self.btn_task_reset]
+        }
+
+        # Iterate through the requested sections
+        for key, buttons in groups.items():
+            if section == 'all' or section == key:
+                for btn in buttons:
+                    btn.setEnabled(bool_set)
 
     def set_gui_input_enable(self, section, bool_set):
+        # 1. Define the standard groups
+        groups = {
+            'confocal': [
+                self.dbl_confocal_x_start, self.dbl_confocal_x_stop,
+                self.int_confocal_x_numdivs, self.dbl_confocal_y_start,
+                self.dbl_confocal_y_stop, self.btn_confocal_pxsync,
+                self.dbl_confocal_z_start, self.dbl_confocal_z_stop,
+                self.int_confocal_z_numdivs, self.dbl_confocal_acqtime
+            ],
+            # Add other sections (liveapd, tracker, etc.) here as needed
+        }
+
+        # 2. Batch process the standard widgets
+        for key, widgets in groups.items():
+            if section == 'all' or section == key:
+                for widget in widgets:
+                    widget.setEnabled(bool_set)
+
+        # 3. Handle the "Special" Conditional Logic
         if section in ['confocal', 'all']:
-            self.dbl_confocal_x_start.setEnabled(bool_set)
-            self.dbl_confocal_x_stop.setEnabled(bool_set)
-            self.int_confocal_x_numdivs.setEnabled(bool_set)
-            self.dbl_confocal_y_start.setEnabled(bool_set)
-            self.dbl_confocal_y_stop.setEnabled(bool_set)
-            self.btn_confocal_pxsync.setEnabled(bool_set)
-            self.int_confocal_y_numdivs.setEnabled(bool_set and not self.btn_confocal_pxsync.isChecked())
-            self.dbl_confocal_z_start.setEnabled(bool_set)
-            self.dbl_confocal_z_stop.setEnabled(bool_set)
-            self.int_confocal_z_numdivs.setEnabled(bool_set)
-            self.dbl_confocal_acqtime.setEnabled(bool_set)
-            self.confocal_zstack_enable(bool(self.int_confocal_z_numdivs.value()) and bool_set)
+            # Logic for Y-divisions depends on the Sync button
+            y_sync_active = self.btn_confocal_pxsync.isChecked()
+            self.int_confocal_y_numdivs.setEnabled(bool_set and not y_sync_active)
+
+            # Logic for Z-stack depends on whether there are slices defined
+            z_has_slices = bool(self.int_confocal_z_numdivs.value())
+            self.confocal_zstack_enable(bool_set and z_has_slices)
 
     def closeEvent(self, *args, **kwargs):
         if self.thread_camera.isRunning():
