@@ -103,7 +103,7 @@
      <widget class="QPushButton" name="btn_confocal_load">
       <property name="geometry">
        <rect>
-        <x>230</x>
+        <x>460</x>
         <y>0</y>
         <width>91</width>
         <height>50</height>
@@ -130,6 +130,41 @@
       </property>
       <property name="text">
        <string>log scale</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_sample_location">
+      <property name="geometry">
+       <rect>
+        <x>240</x>
+        <y>10</y>
+        <width>51</width>
+        <height>30</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Location</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+      </property>
+     </widget>
+     <widget class="QSpinBox" name="int_confocal_x_numdivs_2">
+      <property name="geometry">
+       <rect>
+        <x>300</x>
+        <y>10</y>
+        <width>90</width>
+        <height>30</height>
+       </rect>
+      </property>
+      <property name="keyboardTracking">
+       <bool>false</bool>
+      </property>
+      <property name="minimum">
+       <number>1</number>
+      </property>
+      <property name="maximum">
+       <number>100</number>
       </property>
      </widget>
     </widget>
@@ -973,7 +1008,7 @@
       <string>No</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="btn_task_stop">
+    <widget class="QPushButton" name="btn_task_reset">
      <property name="geometry">
       <rect>
        <x>600</x>
@@ -983,7 +1018,7 @@
       </rect>
      </property>
      <property name="text">
-      <string>STOP</string>
+      <string>RESET</string>
      </property>
     </widget>
     <widget class="QGroupBox" name="gBox_ManualControl">
@@ -1309,6 +1344,19 @@
       <string>log scale</string>
      </property>
     </widget>
+    <widget class="QPushButton" name="btn_task_automate">
+     <property name="geometry">
+      <rect>
+       <x>480</x>
+       <y>720</y>
+       <width>100</width>
+       <height>111</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Automate</string>
+     </property>
+    </widget>
     <zorder>cbox_camera_list</zorder>
     <zorder>glw_liveapd</zorder>
     <zorder>gridLayoutWidget_5</zorder>
@@ -1318,7 +1366,7 @@
     <zorder>btn_camera_select</zorder>
     <zorder>btn_task_yes</zorder>
     <zorder>btn_task_no</zorder>
-    <zorder>btn_task_stop</zorder>
+    <zorder>btn_task_reset</zorder>
     <zorder>gBox_ManualControl</zorder>
     <zorder>gBox_AutoFocus</zorder>
     <zorder>dbl_liveapd_acqtime</zorder>
@@ -1328,6 +1376,7 @@
     <zorder>btn_liveapd_start</zorder>
     <zorder>btn_task_analyze</zorder>
     <zorder>chkbx_camera_loglevel</zorder>
+    <zorder>btn_task_automate</zorder>
    </widget>
    <widget class="QFrame" name="frame_navigator">
     <property name="geometry">
@@ -1434,7 +1483,7 @@
   <tabstop>btn_tracker_mode_image</tabstop>
   <tabstop>btn_task_yes</tabstop>
   <tabstop>btn_task_no</tabstop>
-  <tabstop>btn_task_stop</tabstop>
+  <tabstop>btn_task_reset</tabstop>
  </tabstops>
  <resources/>
  <connections/>

@@ -284,7 +284,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.dbl_tracker_zpos.setValue(225.0)
         self.dbl_tracker_zpos.blockSignals(False)
 
-        self.chkbx_confocal_autolevel.setChecked(True)
+        self.chkbx_confocal_autolevel.setChecked(False)
         self.chkbx_camera_autolevel.setChecked(False)
 
     def illum_set(self, source, state):
