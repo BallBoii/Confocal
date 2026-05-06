@@ -88,11 +88,13 @@ class MainWindow(QtWidgets.QMainWindow):
         self.btn_confocal_stop.clicked.connect(self.confocal_stop)
         self.btn_confocal_save.clicked.connect(functools.partial(self.thread_confocal.save, ext=True))
         self.btn_confocal_pxsync.clicked.connect(self.confocal_pxsync)
-        self.chkbx_confocal_autolevel.setChecked(True)
-        self.chkbx_confocal_autolevel.stateChanged.connect(self.confocal_set_autolevel)
+        self.chkbx_confocal_autolevel.toggled.connect(self.confocal_set_autolevel)
+        self.chkbx_confocal_loglevel.toggled.connect(self.confocal_loglevel)
         self.btn_confocal_acqtime_inc.clicked.connect(self.confocal_acqtime_inc)
         self.btn_confocal_acqtime_dec.clicked.connect(self.confocal_acqtime_dec)
         self.btn_confocal_load.clicked.connect(self.confocal_load)
+        self.int_confocal_cmin.valueChanged.connect(self.confocal_update_level)
+        self.int_confocal_cmax.valueChanged.connect(self.confocal_update_level)
 
         self.btn_tracker_mode_pixel.setChecked(True)
         self.btn_tracker_mode = QtWidgets.QButtonGroup()
@@ -185,14 +187,14 @@ class MainWindow(QtWidgets.QMainWindow):
         self.btn_camera_select.clicked.connect(self.camera_select)
         self.btn_camera_start.clicked.connect(self.camera_start)
         self.btn_camera_start_roi.clicked.connect(self.camera_start_roi)
-        self.chkbx_camera_autolevel.setChecked(True)
-        self.chkbx_camera_autolevel.stateChanged.connect(self.camera_set_autolevel)
+        self.chkbx_camera_autolevel.toggled.connect(self.camera_set_autolevel)
+        self.chkbx_camera_loglevel.toggled.connect(self.camera_loglevel)
 
         self.camera_data = np.array([])
 
         self.cbox_camera_list.addItems([str(cam).rsplit(' ', 1)[0] for cam in enumerate_cameras(cv2.CAP_MSMF)])
         self.thread_camera = CameraThread(self)
-        self.thread_camera.frame_signal.connect(self.camera_set_image)
+        self.thread_camera.frame_signal.connect(self.camera_updateplot)
 
         '''LIVE APD'''
         self.btn_liveapd_clear.clicked.connect(self.liveapd_clear)
@@ -281,6 +283,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.dbl_tracker_zpos.blockSignals(True)
         self.dbl_tracker_zpos.setValue(225.0)
         self.dbl_tracker_zpos.blockSignals(False)
+
+        self.chkbx_confocal_autolevel.setChecked(True)
+        self.chkbx_camera_autolevel.setChecked(False)
 
     def illum_set(self, source, state):
         """Sets the digital output for the laser or LED."""
@@ -420,45 +425,71 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def confocal_initplot(self):
         with warnings.catch_warnings():
-            warnings.filterwarnings('ignore', r'All-NaN (slice|axis) encountered')
-            start_x = self.confocal_rngx[0]
-            stop_x = self.confocal_rngx[-1]
-            start_y = self.confocal_rngy[0]
-            stop_y = self.confocal_rngy[-1]
+            if self.confocal_pl.size:
+                warnings.filterwarnings('ignore', r'All-NaN (slice|axis) encountered')
+                start_x = self.confocal_rngx[0]
+                stop_x = self.confocal_rngx[-1]
+                start_y = self.confocal_rngy[0]
+                stop_y = self.confocal_rngy[-1]
 
-            px = (stop_x - start_x) / (len(self.confocal_rngx)-1)
-            py = (stop_y - start_y) / (len(self.confocal_rngy)-1)
+                px = (stop_x - start_x) / (len(self.confocal_rngx)-1)
+                py = (stop_y - start_y) / (len(self.confocal_rngy)-1)
 
-            self.qtimg_confocal.setImage(self.confocal_pl[:, :, 0])
+                for i in [0, 1, 4]:
+                    iso = getattr(self, f'iso_mask_{i}')
+                    iso.setData(None)
 
-            for name in ['confocal']:
-                qtimg = getattr(self, 'qtimg_%s' % name)
-                qtimg.resetTransform()  # need to call this. otherwise pos and scale are relative to previous
-                qtimg.setRect(start_x-px/2, start_y-py/2, (stop_x - start_x)+px, (stop_y - start_y)+py)
+                if not self.chkbx_confocal_loglevel.isChecked():
+                    self.qtimg_confocal.setImage(self.confocal_pl[:, :, 0])
+                else:
+                    self.qtimg_confocal.setImage(np.log10(self.confocal_pl[:, :, 0]+ 1))
 
-            if self.confocal_mode == 0:
-                self.plt_confocal.setLabels(bottom='xpos (&mu;m)', left='ypos (&mu;m)')
-            if self.confocal_mode == 1:
-                self.plt_confocal.setLabels(bottom='xpos (&mu;m)', left='zpos (&mu;m)')
-            if self.confocal_mode == 2:
-                self.plt_confocal.setLabels(bottom='ypos (&mu;m)', left='zpos (&mu;m)')
+                for name in ['confocal']:
+                    qtimg = getattr(self, 'qtimg_%s' % name)
+                    qtimg.resetTransform()  # need to call this. otherwise pos and scale are relative to previous
+                    qtimg.setRect(start_x-px/2, start_y-py/2, (stop_x - start_x)+px, (stop_y - start_y)+py)
 
-            processEvents()
+                if self.confocal_mode == 0:
+                    self.plt_confocal.setLabels(bottom='xpos (&mu;m)', left='ypos (&mu;m)')
+                if self.confocal_mode == 1:
+                    self.plt_confocal.setLabels(bottom='xpos (&mu;m)', left='zpos (&mu;m)')
+                if self.confocal_mode == 2:
+                    self.plt_confocal.setLabels(bottom='ypos (&mu;m)', left='zpos (&mu;m)')
+
+                processEvents()
 
     def confocal_updateplot(self, zindex=0, sindex=0):
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore', r'All-NaN (slice|axis) encountered')
+            if self.confocal_pl.size:
+                if not self.chkbx_confocal_loglevel.isChecked():
+                    self.qtimg_confocal.setImage(self.confocal_pl[:, :, zindex])
+                else:
+                    self.qtimg_confocal.setImage(np.log10(self.confocal_pl[:, :, zindex] + 1))
+                # self.hlw_confocal.setImageItem(self.qtimg_confocal)
+                self.confocal_scanLine.setPos(self.confocal_rngy[sindex])
+                filename = 'IMG_%04d' % self.wavenum
 
-            self.qtimg_confocal.setImage(self.confocal_pl[:, :, zindex])
-            # self.hlw_confocal.setImageItem(self.qtimg_confocal)
-            self.confocal_scanLine.setPos(self.confocal_rngy[sindex])
-            filename = 'IMG_%04d' % self.wavenum
-
-            self.plt_confocal.setTitle('%s: Z = %.2f' % (filename, self.confocal_rngz[zindex]))
-            self.label_filename.setText(filename)
+                self.plt_confocal.setTitle('%s: Z = %.2f' % (filename, self.confocal_rngz[zindex]))
+                self.label_filename.setText(filename)
 
     def confocal_set_autolevel(self, b):
         self.hlw_confocal.item.autoLevel = bool(b)
+
+    def confocal_loglevel(self, checked):
+        self.confocal_initplot()
+        if not self.chkbx_confocal_autolevel.isChecked():
+            self.confocal_update_level()
+
+    def confocal_update_level(self):
+        self.chkbx_confocal_autolevel.setChecked(False)
+        self.hlw_confocal.item.autoLevel = False
+        if not self.chkbx_confocal_loglevel.isChecked():
+            self.hlw_confocal.item.setLevels(self.int_confocal_cmin.value(),
+                                             self.int_confocal_cmax.value())
+        else:
+            self.hlw_confocal.item.setLevels(np.log10(self.int_confocal_cmin.value()),
+                                             np.log10(self.int_confocal_cmax.value()))
 
     def confocal_grab_screenshots(self):
         self.pixmap_confocal_graph = self.frame_main.grab()
@@ -515,13 +546,21 @@ class MainWindow(QtWidgets.QMainWindow):
             self.plt_confocal.setTitle(targetfile)
             self.confocal_initplot()
 
-    def camera_updateplot(self):
-        with warnings.catch_warnings():
-            warnings.simplefilter('ignore', RuntimeWarning)  # for ignoring warnings when plotting NaNs
+    def camera_updateplot(self, image):
+        xpos = self.dbl_tracker_xpos.value()
+        ypos = self.dbl_tracker_ypos.value()
 
-            if len(self.camera_data) > 0:
-                self.qtimg_camera.setImage(self.camera_data)
-                processEvents()
+        if not self.chkbx_camera_loglevel.isChecked():
+            self.qtimg_camera.setImage(image)
+        else:
+            self.qtimg_camera.setImage(np.log10(image + 1.1))
+
+        fov = tuple(self.inst_params['camera']['fov'])
+        self.qtimg_camera.setRect(xpos-fov[0]/2, ypos-fov[1]/2, fov[0], fov[1])
+
+    def camera_loglevel(self, checked):
+        if not checked: self.hlw_camera.item.setLevels(0, 255)
+        else: self.hlw_camera.item.setLevels(np.log10(255), 0)
 
     def camera_select(self, checked):
         if checked:  # enable cursor
@@ -564,13 +603,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.chkbx_camera_autolevel.setChecked(False)
         self.hlw_camera.item.setLevels(0, 255)
         self.thread_camera.start()
-
-    def camera_set_image(self, image):
-        xpos = self.dbl_tracker_xpos.value()
-        ypos = self.dbl_tracker_ypos.value()
-        self.qtimg_camera.setImage(image)
-        fov = tuple(self.inst_params['camera']['fov'])
-        self.qtimg_camera.setRect(xpos-fov[0]/2, ypos-fov[1]/2, fov[0], fov[1])
 
     def tracker_drive(self):
         xpos = self.dbl_tracker_xpos.value()
@@ -650,10 +682,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
         best_angle = akl_image_processing.find_stripe_angle(data)
         params = akl_image_processing.search_stripe_pattern(data, best_angle)
-        print(best_angle)
-        print(params)
 
-        masks = akl_image_processing.generate_stripe_mask(data, *params, best_angle)
+        masks = akl_image_processing.generate_stripe_mask(data, best_angle, *params)
+
+        print(best_angle, *params)
 
         start_x = data['xvals'][0]
         stop_x = data['xvals'][-1]
@@ -674,6 +706,8 @@ class MainWindow(QtWidgets.QMainWindow):
             if i in [0, 1, 4]:
                 iso = getattr(self, f'iso_mask_{i}')
                 iso.setData(mask)
+
+        akl_image_processing.analyze_image(data, masks)
 
     def task_forward(self):
         value = (self.progressbar.value + 1) % (len(self.progressbar.labels) + 1)

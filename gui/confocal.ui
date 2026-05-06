@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1617</width>
-    <height>887</height>
+    <width>1619</width>
+    <height>905</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -20,7 +20,7 @@
       <x>10</x>
       <y>10</y>
       <width>710</width>
-      <height>821</height>
+      <height>841</height>
      </rect>
     </property>
     <property name="frameShape">
@@ -35,7 +35,7 @@
        <x>10</x>
        <y>10</y>
        <width>691</width>
-       <height>611</height>
+       <height>631</height>
       </rect>
      </property>
      <property name="frameShape">
@@ -48,7 +48,7 @@
       <property name="geometry">
        <rect>
         <x>0</x>
-        <y>40</y>
+        <y>60</y>
         <width>691</width>
         <height>571</height>
        </rect>
@@ -59,7 +59,7 @@
       <property name="geometry">
        <rect>
         <x>0</x>
-        <y>0</y>
+        <y>10</y>
         <width>47</width>
         <height>30</height>
        </rect>
@@ -72,7 +72,7 @@
       <property name="geometry">
        <rect>
         <x>50</x>
-        <y>0</y>
+        <y>10</y>
         <width>181</width>
         <height>30</height>
        </rect>
@@ -90,7 +90,7 @@
         <x>560</x>
         <y>0</y>
         <width>50</width>
-        <height>30</height>
+        <height>50</height>
        </rect>
       </property>
       <property name="text">
@@ -106,7 +106,7 @@
         <x>230</x>
         <y>0</y>
         <width>91</width>
-        <height>30</height>
+        <height>50</height>
        </rect>
       </property>
       <property name="text">
@@ -116,12 +116,28 @@
        <bool>false</bool>
       </property>
      </widget>
+     <widget class="QCheckBox" name="chkbx_confocal_loglevel">
+      <property name="geometry">
+       <rect>
+        <x>600</x>
+        <y>0</y>
+        <width>90</width>
+        <height>30</height>
+       </rect>
+      </property>
+      <property name="layoutDirection">
+       <enum>Qt::LayoutDirection::RightToLeft</enum>
+      </property>
+      <property name="text">
+       <string>log scale</string>
+      </property>
+     </widget>
     </widget>
     <widget class="QCheckBox" name="chkbx_confocal_autolevel">
      <property name="geometry">
       <rect>
        <x>610</x>
-       <y>10</y>
+       <y>30</y>
        <width>90</width>
        <height>30</height>
       </rect>
@@ -137,7 +153,7 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>620</y>
+       <y>640</y>
        <width>691</width>
        <height>191</height>
       </rect>
@@ -177,10 +193,10 @@
      <widget class="QPushButton" name="btn_confocal_roi_undo">
       <property name="geometry">
        <rect>
-        <x>320</x>
-        <y>100</y>
+        <x>250</x>
+        <y>140</y>
         <width>71</width>
-        <height>25</height>
+        <height>40</height>
        </rect>
       </property>
       <property name="text">
@@ -198,6 +214,9 @@
       </property>
       <property name="accelerated">
        <bool>true</bool>
+      </property>
+      <property name="keyboardTracking">
+       <bool>false</bool>
       </property>
       <property name="stepType">
        <enum>QAbstractSpinBox::StepType::AdaptiveDecimalStepType</enum>
@@ -237,6 +256,9 @@
         <width>90</width>
         <height>20</height>
        </rect>
+      </property>
+      <property name="keyboardTracking">
+       <bool>false</bool>
       </property>
      </widget>
      <widget class="QLabel" name="label_confocal_cmin">
@@ -283,6 +305,9 @@
       <property name="accelerated">
        <bool>true</bool>
       </property>
+      <property name="keyboardTracking">
+       <bool>false</bool>
+      </property>
       <property name="stepType">
        <enum>QAbstractSpinBox::StepType::AdaptiveDecimalStepType</enum>
       </property>
@@ -306,7 +331,7 @@
         <x>250</x>
         <y>100</y>
         <width>71</width>
-        <height>25</height>
+        <height>40</height>
        </rect>
       </property>
       <property name="text">
@@ -316,18 +341,21 @@
      <widget class="QDoubleSpinBox" name="dbl_confocal_preset1">
       <property name="geometry">
        <rect>
-        <x>360</x>
-        <y>130</y>
+        <x>450</x>
+        <y>110</y>
         <width>91</width>
         <height>20</height>
        </rect>
+      </property>
+      <property name="keyboardTracking">
+       <bool>false</bool>
       </property>
      </widget>
      <widget class="QLabel" name="label_confocal_x_3">
       <property name="geometry">
        <rect>
-        <x>460</x>
-        <y>160</y>
+        <x>550</x>
+        <y>150</y>
         <width>47</width>
         <height>20</height>
        </rect>
@@ -342,10 +370,10 @@
      <widget class="QPushButton" name="btn_confocal_start_preset1">
       <property name="geometry">
        <rect>
-        <x>250</x>
-        <y>130</y>
+        <x>340</x>
+        <y>100</y>
         <width>101</width>
-        <height>20</height>
+        <height>40</height>
        </rect>
       </property>
       <property name="text">
@@ -377,6 +405,9 @@
       <property name="accelerated">
        <bool>true</bool>
       </property>
+      <property name="keyboardTracking">
+       <bool>false</bool>
+      </property>
       <property name="stepType">
        <enum>QAbstractSpinBox::StepType::AdaptiveDecimalStepType</enum>
       </property>
@@ -397,8 +428,8 @@
      <widget class="QLabel" name="label_confocal_x_2">
       <property name="geometry">
        <rect>
-        <x>460</x>
-        <y>130</y>
+        <x>550</x>
+        <y>110</y>
         <width>47</width>
         <height>20</height>
        </rect>
@@ -448,6 +479,9 @@
         <height>20</height>
        </rect>
       </property>
+      <property name="keyboardTracking">
+       <bool>false</bool>
+      </property>
      </widget>
      <widget class="QDoubleSpinBox" name="dbl_confocal_x_stop">
       <property name="geometry">
@@ -460,6 +494,9 @@
       </property>
       <property name="accelerated">
        <bool>true</bool>
+      </property>
+      <property name="keyboardTracking">
+       <bool>false</bool>
       </property>
       <property name="stepType">
        <enum>QAbstractSpinBox::StepType::AdaptiveDecimalStepType</enum>
@@ -487,6 +524,9 @@
         <height>20</height>
        </rect>
       </property>
+      <property name="keyboardTracking">
+       <bool>false</bool>
+      </property>
      </widget>
      <widget class="QPushButton" name="btn_confocal_acqtime_inc">
       <property name="geometry">
@@ -509,6 +549,9 @@
         <width>90</width>
         <height>20</height>
        </rect>
+      </property>
+      <property name="keyboardTracking">
+       <bool>false</bool>
       </property>
      </widget>
      <widget class="QLabel" name="label_confocal_x">
@@ -536,6 +579,9 @@
         <height>20</height>
        </rect>
       </property>
+      <property name="keyboardTracking">
+       <bool>false</bool>
+      </property>
      </widget>
      <widget class="QSpinBox" name="int_confocal_live_avg">
       <property name="geometry">
@@ -553,20 +599,23 @@
      <widget class="QDoubleSpinBox" name="dbl_confocal_preset2">
       <property name="geometry">
        <rect>
-        <x>360</x>
-        <y>160</y>
+        <x>450</x>
+        <y>150</y>
         <width>91</width>
         <height>20</height>
        </rect>
+      </property>
+      <property name="keyboardTracking">
+       <bool>false</bool>
       </property>
      </widget>
      <widget class="QPushButton" name="btn_confocal_start_preset2">
       <property name="geometry">
        <rect>
-        <x>250</x>
-        <y>160</y>
+        <x>340</x>
+        <y>140</y>
         <width>101</width>
-        <height>20</height>
+        <height>40</height>
        </rect>
       </property>
       <property name="text">
@@ -594,6 +643,9 @@
         <width>90</width>
         <height>20</height>
        </rect>
+      </property>
+      <property name="keyboardTracking">
+       <bool>false</bool>
       </property>
      </widget>
      <widget class="QLabel" name="label_confocal_z">
@@ -672,6 +724,9 @@
       <property name="buttonSymbols">
        <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
       </property>
+      <property name="keyboardTracking">
+       <bool>false</bool>
+      </property>
      </widget>
      <widget class="QSpinBox" name="int_confocal_z_numdivs">
       <property name="geometry">
@@ -681,6 +736,9 @@
         <width>90</width>
         <height>20</height>
        </rect>
+      </property>
+      <property name="keyboardTracking">
+       <bool>false</bool>
       </property>
      </widget>
      <widget class="QPushButton" name="btn_confocal_live">
@@ -723,7 +781,7 @@
       <x>730</x>
       <y>10</y>
       <width>710</width>
-      <height>821</height>
+      <height>841</height>
      </rect>
     </property>
     <property name="frameShape">
@@ -736,7 +794,7 @@
      <property name="geometry">
       <rect>
        <x>220</x>
-       <y>590</y>
+       <y>610</y>
        <width>41</width>
        <height>25</height>
       </rect>
@@ -749,7 +807,7 @@
      <property name="geometry">
       <rect>
        <x>180</x>
-       <y>590</y>
+       <y>610</y>
        <width>41</width>
        <height>25</height>
       </rect>
@@ -762,7 +820,7 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>10</y>
+       <y>20</y>
        <width>170</width>
        <height>30</height>
       </rect>
@@ -772,7 +830,7 @@
      <property name="geometry">
       <rect>
        <x>20</x>
-       <y>590</y>
+       <y>610</y>
        <width>81</width>
        <height>22</height>
       </rect>
@@ -785,7 +843,7 @@
      <property name="geometry">
       <rect>
        <x>100</x>
-       <y>590</y>
+       <y>610</y>
        <width>81</width>
        <height>25</height>
       </rect>
@@ -798,7 +856,7 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>438</y>
+       <y>458</y>
        <width>690</width>
        <height>181</height>
       </rect>
@@ -808,7 +866,7 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>48</y>
+       <y>68</y>
        <width>691</width>
        <height>381</height>
       </rect>
@@ -819,7 +877,7 @@
      <property name="geometry">
       <rect>
        <x>260</x>
-       <y>590</y>
+       <y>610</y>
        <width>41</width>
        <height>25</height>
       </rect>
@@ -832,7 +890,7 @@
      <property name="geometry">
       <rect>
        <x>610</x>
-       <y>10</y>
+       <y>30</y>
        <width>90</width>
        <height>30</height>
       </rect>
@@ -850,7 +908,7 @@
        <x>190</x>
        <y>10</y>
        <width>71</width>
-       <height>30</height>
+       <height>50</height>
       </rect>
      </property>
      <property name="text">
@@ -866,7 +924,7 @@
        <x>290</x>
        <y>10</y>
        <width>70</width>
-       <height>30</height>
+       <height>50</height>
       </rect>
      </property>
      <property name="text">
@@ -879,7 +937,7 @@
        <x>560</x>
        <y>10</y>
        <width>50</width>
-       <height>30</height>
+       <height>50</height>
       </rect>
      </property>
      <property name="text">
@@ -893,7 +951,7 @@
      <property name="geometry">
       <rect>
        <x>600</x>
-       <y>630</y>
+       <y>650</y>
        <width>100</width>
        <height>50</height>
       </rect>
@@ -906,7 +964,7 @@
      <property name="geometry">
       <rect>
        <x>600</x>
-       <y>695</y>
+       <y>715</y>
        <width>100</width>
        <height>50</height>
       </rect>
@@ -919,7 +977,7 @@
      <property name="geometry">
       <rect>
        <x>600</x>
-       <y>760</y>
+       <y>780</y>
        <width>100</width>
        <height>50</height>
       </rect>
@@ -932,7 +990,7 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>620</y>
+       <y>640</y>
        <width>241</width>
        <height>191</height>
       </rect>
@@ -1087,7 +1145,7 @@
      <property name="geometry">
       <rect>
        <x>260</x>
-       <y>620</y>
+       <y>640</y>
        <width>211</width>
        <height>191</height>
       </rect>
@@ -1119,6 +1177,9 @@
         <width>80</width>
         <height>20</height>
        </rect>
+      </property>
+      <property name="keyboardTracking">
+       <bool>false</bool>
       </property>
      </widget>
      <widget class="QLabel" name="label_tracker_acqtime">
@@ -1223,13 +1284,29 @@
      <property name="geometry">
       <rect>
        <x>480</x>
-       <y>630</y>
+       <y>650</y>
        <width>100</width>
        <height>50</height>
       </rect>
      </property>
      <property name="text">
       <string>Analyze</string>
+     </property>
+    </widget>
+    <widget class="QCheckBox" name="chkbx_camera_loglevel">
+     <property name="geometry">
+      <rect>
+       <x>610</x>
+       <y>10</y>
+       <width>90</width>
+       <height>30</height>
+      </rect>
+     </property>
+     <property name="layoutDirection">
+      <enum>Qt::LayoutDirection::RightToLeft</enum>
+     </property>
+     <property name="text">
+      <string>log scale</string>
      </property>
     </widget>
     <zorder>cbox_camera_list</zorder>
@@ -1250,6 +1327,7 @@
     <zorder>btn_liveapd_stop</zorder>
     <zorder>btn_liveapd_start</zorder>
     <zorder>btn_task_analyze</zorder>
+    <zorder>chkbx_camera_loglevel</zorder>
    </widget>
    <widget class="QFrame" name="frame_navigator">
     <property name="geometry">
@@ -1257,7 +1335,7 @@
       <x>1450</x>
       <y>10</y>
       <width>161</width>
-      <height>821</height>
+      <height>841</height>
      </rect>
     </property>
     <property name="frameShape">
@@ -1272,7 +1350,7 @@
        <x>0</x>
        <y>0</y>
        <width>161</width>
-       <height>821</height>
+       <height>841</height>
       </rect>
      </property>
      <layout class="QVBoxLayout" name="layout_navigator"/>
@@ -1284,7 +1362,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1617</width>
+     <width>1619</width>
      <height>33</height>
     </rect>
    </property>

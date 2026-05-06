@@ -11,13 +11,13 @@ ANGLE_RNG = 45
 ANGLE_RES = 0.1
 PERIOD = 110
 PERIOD_RNG = 15
-PERIOD_RES = 1
+PERIOD_RES = 0.2
 WIDTH = 35
 WIDTH_RNG = 15
 WIDTH_RES = 1
 PHASE = 0
 PHASE_RNG = 180
-PHASE_RES = 1
+PHASE_RES = 0.2
 
 def get_projection_variance(img, angle):
     # Rotate the image
@@ -196,7 +196,7 @@ def search_stripe_pattern(data, best_angle, display=False):
 
     return params
 
-def generate_stripe_mask(data, period, width_bright, phase_offset, theta_deg, display=True):
+def generate_stripe_mask(data, theta_deg, period, width_bright, phase_offset, display=False):
     """
     Generates a set of 5 binary masks representing different spatial zones of the
     periodic stripe pattern relative to the fitted 'land' area.
@@ -279,7 +279,7 @@ def generate_stripe_mask(data, period, width_bright, phase_offset, theta_deg, di
         plt.tight_layout()
         plt.show()
 
-    return (mask.astype(int), mask1.astype(int), mask2.astype(int), mask3.astype(int), mask4.astype(int))
+    return mask.astype(int), mask1.astype(int), mask2.astype(int), mask3.astype(int), mask4.astype(int)
 
 
 def analyze_image(data, masks):
@@ -287,15 +287,21 @@ def analyze_image(data, masks):
     # todo: preprocess image / clip intensity / etc
 
     metrics = {}
-    metrics['total pixels'] = int(np.sum(masks[1:]))
+    metrics['total pixels'] = pl.size
     metrics['mean (cps)'] = np.mean(pl)
     metrics['stdev (cps)'] = np.std(pl)
 
     for i in [1, 2, 3, 4]:
-        metrics[f'area {i} pixels'] = int(np.sum(masks[i]))
-        metrics[f'area {i} percent'] = int(np.sum(masks[i])) / int(np.sum(masks)) * 100
+        area_pixels = np.count_nonzero(masks[i])
+        metrics[f'area {i} pixels'] = area_pixels
+        metrics[f'area {i} percent'] = (area_pixels / pl.size) * 100
 
-        metrics[f'area {i} mean (cps)'] = np.mean(pl[masks[i]])
-        metrics[f'area {i} stdev (cps)'] = np.std(pl[masks[i]])
+        # Safely handle empty masks to avoid numpy NaN warnings
+        if area_pixels > 0:
+            metrics[f'area {i} mean (cps)'] = np.mean(pl[masks[i]])
+            metrics[f'area {i} stdev (cps)'] = np.std(pl[masks[i]])
+        else:
+            metrics[f'area {i} mean (cps)'] = 0.0
+            metrics[f'area {i} stdev (cps)'] = 0.0
 
     pprint.pprint(metrics)
