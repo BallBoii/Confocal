@@ -184,7 +184,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.plt_camera.addItem(self.camera_hLine, ignoreBounds=True)
 
         self.btn_camera_select.clicked.connect(self.camera_select)
-        self.btn_camera_start.clicked.connect(self.camera_start)
+        self.btn_camera_start.toggled.connect(self.camera_start)
         self.btn_camera_start_roi.clicked.connect(self.camera_start_roi)
         self.chkbx_camera_autolevel.toggled.connect(self.camera_set_autolevel)
         self.chkbx_camera_loglevel.toggled.connect(self.camera_loglevel)
@@ -330,7 +330,7 @@ class MainWindow(QtWidgets.QMainWindow):
         ymax = self.dbl_confocal_y_stop.value()
 
         return (xmin, xmax, ymin, ymax)
-    
+
     def confocal_settings_store(self):
         settings = self.confocal_get_settings()
 
@@ -592,10 +592,11 @@ class MainWindow(QtWidgets.QMainWindow):
     def camera_set_autolevel(self, b):
         self.hlw_camera.item.autoLevel = bool(b)
 
-    def camera_start(self):
-        self.chkbx_camera_autolevel.setChecked(False)
-        self.hlw_camera.item.setLevels(0, 255)
-        self.thread_camera.start()
+    def camera_start(self, checked):
+        if checked:
+            self.chkbx_camera_autolevel.setChecked(False)
+            self.hlw_camera.item.setLevels(0, 255)
+            self.thread_camera.start()
 
     def camera_start_roi(self):
         print('TO IMPLEMENT: relative ROI')
@@ -720,22 +721,22 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def task_reset(self):
         self.progressbar.value = 0
-        self.int_sample_loc.setValue(1)
+        self.int_sample_loc.setValue(0)
+        self.task_action()
 
-    def task_forward(self):
-        value = (self.progressbar.value + 1) % (len(self.progressbar.labels) + 1)
-        self.progressbar.value = value
+    def task_action(self):
+        value = self.progressbar.value
         if value == 0:
             self.int_sample_loc.setValue(self.int_sample_loc.value() + 1)
             # Load Plate
-            if not self.thread_camera.isRunning():
-                self.camera_start()
+            self.btn_camera_start.setChecked(True)
             self.illum_set('laser', False)
             self.illum_set('led', True)
             self.piezo.SetPosition(225.0)
         elif value == 1:
             # Check Laser Position
             self.illum_set('laser', True)
+            self.illum_set('led', True)
             self.piezo.SetPosition(225.0)
         elif value == 2:
             # Autofocus
@@ -761,18 +762,17 @@ class MainWindow(QtWidgets.QMainWindow):
         elif value == 7:
             print('Image Analysis Done')
 
+    def task_forward(self):
+        self.progressbar.value = (self.progressbar.value + 1) % (len(self.progressbar.labels) + 1)
+        self.task_action()
+
     def task_backward(self):
         value = self.progressbar.value
         if value in [2, 3, 4]:
             self.progressbar.value = 1
-            self.illum_set('laser', True)
-            self.illum_set('led', True)
-            self.piezo.SetPosition(225.0)
         else:
             self.progressbar.value = 0
-            self.illum_set('laser', False)
-            self.illum_set('led', True)
-            self.piezo.SetPosition(225.0)
+        self.task_action()
 
     def import_gui_settings(self, data):
         # refill the linein, double, and integer fields in the gui
@@ -829,6 +829,11 @@ class MainWindow(QtWidgets.QMainWindow):
             if section == 'all' or section == key:
                 for btn in buttons:
                     btn.setEnabled(bool_set)
+
+        if self.btn_task_automate.isChecked():
+            for btn in groups['automation']:
+                btn.setEnabled(True)
+
 
     def set_gui_input_enable(self, section, bool_set):
         # 1. Define the standard groups

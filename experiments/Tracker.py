@@ -110,37 +110,38 @@ class Tracker(ExpThread.ExpThread):
 
         self.mainexp.set_gui_btn_enable('all', False)
 
-        z0 = self.mainexp.dbl_tracker_zpos.value()
-        dz = self.mainexp.dbl_tracker_zrng.value()
-        n = self.mainexp.int_tracker_numdivs.value() + 1
+        try:
+            z0 = self.mainexp.dbl_tracker_zpos.value()
+            dz = self.mainexp.dbl_tracker_zrng.value()
+            n = self.mainexp.int_tracker_numdivs.value() + 1
 
-        zs = np.linspace(z0 - dz, z0+dz, n)
+            zs = np.linspace(z0 - dz, z0+dz, n)
 
-        self.mainexp.focus_zpos = zs
-        self.mainexp.focus_score = np.empty(n)
-        self.mainexp.focus_score[:] = np.nan
-        self.mainexp.focus_zpos_fit = []
-        self.mainexp.focus_score_fit = []
+            self.mainexp.focus_zpos = zs
+            self.mainexp.focus_score = np.empty(n)
+            self.mainexp.focus_score[:] = np.nan
+            self.mainexp.focus_zpos_fit = []
+            self.mainexp.focus_score_fit = []
 
-        for i, z in enumerate(zs):
-            self.mainexp.piezo.SetPosition(z)
-            time.sleep(PIEZO_DELAY)
-            pl = self.get_pl(self.mainexp.dbl_tracker_acqtime.value())
+            for i, z in enumerate(zs):
+                self.mainexp.piezo.SetPosition(z)
+                time.sleep(PIEZO_DELAY)
+                pl = self.get_pl(self.mainexp.dbl_tracker_acqtime.value())
 
-            self.mainexp.focus_score[i] = pl
+                self.mainexp.focus_score[i] = pl
+                self.signal_tracker_updateplot.emit()
+
+            z_best, focus_score_fit, focus_zpos_fit = self.find_focus_max(self.mainexp.focus_zpos, self.mainexp.focus_score)
+
+            self.mainexp.focus_zpos_fit = focus_zpos_fit
+            self.mainexp.focus_score_fit = focus_score_fit
             self.signal_tracker_updateplot.emit()
 
-        z_best, focus_score_fit, focus_zpos_fit = self.find_focus_max(self.mainexp.focus_zpos, self.mainexp.focus_score)
-
-        self.mainexp.focus_zpos_fit = focus_zpos_fit
-        self.mainexp.focus_score_fit = focus_score_fit
-        self.signal_tracker_updateplot.emit()
-
-        self.mainexp.piezo.SetPosition(z_best)
-        time.sleep(PIEZO_DELAY)
-        self.mainexp.dbl_tracker_zpos.blockSignals(True)
-        self.mainexp.dbl_tracker_zpos.setValue(z_best)
-        self.mainexp.dbl_tracker_zpos.blockSignals(False)
-
-        self.mainexp.set_gui_btn_enable('all', True)
+            self.mainexp.piezo.SetPosition(z_best)
+            time.sleep(PIEZO_DELAY)
+            self.mainexp.dbl_tracker_zpos.blockSignals(True)
+            self.mainexp.dbl_tracker_zpos.setValue(z_best)
+            self.mainexp.dbl_tracker_zpos.blockSignals(False)
+        finally:
+            self.mainexp.set_gui_defaults()
 
