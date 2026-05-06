@@ -148,7 +148,7 @@
        <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
       </property>
      </widget>
-     <widget class="QSpinBox" name="int_confocal_x_numdivs_2">
+     <widget class="QSpinBox" name="int_sample_loc">
       <property name="geometry">
        <rect>
         <x>300</x>
@@ -156,6 +156,9 @@
         <width>90</width>
         <height>30</height>
        </rect>
+      </property>
+      <property name="focusPolicy">
+       <enum>Qt::FocusPolicy::WheelFocus</enum>
       </property>
       <property name="keyboardTracking">
        <bool>false</bool>
@@ -1355,6 +1358,9 @@
      </property>
      <property name="text">
       <string>Automate</string>
+     </property>
+     <property name="checkable">
+      <bool>true</bool>
      </property>
     </widget>
     <zorder>cbox_camera_list</zorder>

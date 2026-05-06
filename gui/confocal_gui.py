@@ -229,7 +229,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.btn_task_analyze.clicked.connect(self.task_analyze)
         self.btn_task_yes.clicked.connect(self.task_forward)
-        self.btn_task_no.clicked.connect(self.task_backward) # todo
+        self.btn_task_no.clicked.connect(self.task_backward)
+        self.btn_task_reset.clicked.connect(self.task_reset)
+        self.btn_task_automate.clicked.connect(self.task_set_automate)
+        self.set_gui_btn_enable('automation', False)
 
         self.layout_navigator.addWidget(self.progressbar)
 
@@ -708,10 +711,21 @@ class MainWindow(QtWidgets.QMainWindow):
 
         akl_image_processing.analyze_image(data, masks)
 
+    def task_set_automate(self, checked):
+        self.set_gui_btn_enable('all', not checked)
+        self.set_gui_btn_enable('automation', checked)
+        if checked:
+            self.task_reset()
+
+    def task_reset(self):
+        self.progressbar.value = 0
+        self.int_sample_loc.setValue(1)
+
     def task_forward(self):
         value = (self.progressbar.value + 1) % (len(self.progressbar.labels) + 1)
         self.progressbar.value = value
         if value == 0:
+            self.int_sample_loc.setValue(self.int_sample_loc.value() + 1)
             # Load Plate
             if not self.thread_camera.isRunning():
                 self.camera_start()
@@ -813,6 +827,12 @@ class MainWindow(QtWidgets.QMainWindow):
         if section in ['tracker', 'all']:
             self.btn_tracker_home.setEnabled(bool_set)
             self.btn_tracker_autofocus.setEnabled(bool_set)
+        if section in ['analysis', 'all']:
+            self.btn_task_analyze.setEnabled(bool_set)
+        if section in ['automation', 'all']:
+            self.btn_task_yes.setEnabled(bool_set)
+            self.btn_task_no.setEnabled(bool_set)
+            self.btn_task_reset.setEnabled(bool_set)
 
     def set_gui_input_enable(self, section, bool_set):
         if section in ['confocal', 'all']:
