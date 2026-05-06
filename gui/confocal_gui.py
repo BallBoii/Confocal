@@ -481,7 +481,7 @@ class MainWindow(QtWidgets.QMainWindow):
                                              np.log10(self.int_confocal_cmax.value()))
 
     def confocal_grab_screenshots(self):
-        self.pixmap_confocal_graph = self.frame_main.grab()
+        self.pixmap_confocal_graph = self.grab()
         self.pixmap_confocal_fig = self.frame_main_confocal.grab()
         processEvents()
 

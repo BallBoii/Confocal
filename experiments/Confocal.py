@@ -426,7 +426,15 @@ class Confocal(ExpThread.ExpThread):
         data_dict = {'pl': self.mainexp.confocal_pl,
                      'xvals': self.mainexp.confocal_rngx,
                      'yvals': self.mainexp.confocal_rngy,
-                     'zvals': self.mainexp.confocal_rngz}
+                     'zvals': self.mainexp.confocal_rngz,
+                     'cam_image': self.mainexp.qtimg_camera.image,
+                     'cam_fov': tuple(self.mainexp.inst_params['camera']['fov']),
+                     'mask_0': self.mainexp.mask_0,
+                     'mask_1': self.mainexp.mask_1,
+                     'mask_2': self.mainexp.mask_2,
+                     'mask_3': self.mainexp.mask_3,
+                     'mask_4': self.mainexp.mask_4,
+                     }
 
         self.save_data(filename, data_dict, graph=graph, fig=fig)
 
