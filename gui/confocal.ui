@@ -100,6 +100,22 @@
        <bool>true</bool>
       </property>
      </widget>
+     <widget class="QPushButton" name="btn_confocal_load">
+      <property name="geometry">
+       <rect>
+        <x>230</x>
+        <y>0</y>
+        <width>91</width>
+        <height>30</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Load Image</string>
+      </property>
+      <property name="checkable">
+       <bool>false</bool>
+      </property>
+     </widget>
     </widget>
     <widget class="QCheckBox" name="chkbx_confocal_autolevel">
      <property name="geometry">
@@ -1203,6 +1219,19 @@
       </property>
      </widget>
     </widget>
+    <widget class="QPushButton" name="btn_task_analyze">
+     <property name="geometry">
+      <rect>
+       <x>480</x>
+       <y>630</y>
+       <width>100</width>
+       <height>50</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Analyze</string>
+     </property>
+    </widget>
     <zorder>cbox_camera_list</zorder>
     <zorder>glw_liveapd</zorder>
     <zorder>gridLayoutWidget_5</zorder>
@@ -1220,6 +1249,7 @@
     <zorder>label_liveapd_acqtime</zorder>
     <zorder>btn_liveapd_stop</zorder>
     <zorder>btn_liveapd_start</zorder>
+    <zorder>btn_task_analyze</zorder>
    </widget>
    <widget class="QFrame" name="frame_navigator">
     <property name="geometry">

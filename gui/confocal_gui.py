@@ -17,6 +17,7 @@ import nidaqmx
 
 # import UI files
 import mainexp_widgets
+import akl_image_processing
 
 
 def my_excepthook(type, value, tback):
@@ -91,6 +92,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.chkbx_confocal_autolevel.stateChanged.connect(self.confocal_set_autolevel)
         self.btn_confocal_acqtime_inc.clicked.connect(self.confocal_acqtime_inc)
         self.btn_confocal_acqtime_dec.clicked.connect(self.confocal_acqtime_dec)
+        self.btn_confocal_load.clicked.connect(self.confocal_load)
 
         self.btn_tracker_mode_pixel.setChecked(True)
         self.btn_tracker_mode = QtWidgets.QButtonGroup()
@@ -115,6 +117,22 @@ class MainWindow(QtWidgets.QMainWindow):
             setattr(self, 'qtimg_%s' % name, pg.ImageItem())
             getattr(self, 'vb_%s' % name).addItem(getattr(self, 'qtimg_%s' % name))
             getattr(self, 'plt_%s' % name).setLabels(bottom='xpos (&mu;m)', left='ypos (&mu;m)')
+
+        for i in range(5):
+            # Create a fully transparent lookup table (All zeros for RGBA)
+            transparent_lut = np.zeros((256, 4), dtype=np.ubyte)
+            setattr(self, 'mask_%i' % i, np.array([]))
+            setattr(self, 'qtimg_mask_%i' % i, pg.ImageItem())
+            getattr(self, 'qtimg_mask_%i' % i).setLookupTable(transparent_lut)
+            getattr(self, 'vb_confocal').addItem(getattr(self, 'qtimg_mask_%s' % i))
+
+        # Create contour lines for exact match, inner land, and outside areas
+        self.iso_mask_0 = pg.IsocurveItem(data=None, level=0.5, pen=pg.mkPen('w', width=1))
+        self.iso_mask_0.setParentItem(self.qtimg_mask_0)
+        self.iso_mask_1 = pg.IsocurveItem(data=None, level=0.5, pen=pg.mkPen('w', width=1))
+        self.iso_mask_1.setParentItem(self.qtimg_mask_1)
+        self.iso_mask_4 = pg.IsocurveItem(data=None, level=0.5, pen=pg.mkPen('w', width=1))
+        self.iso_mask_4.setParentItem(self.qtimg_mask_4)
 
         '''CONFOCAL PLOTS'''
         self.glw_confocal = pg.GraphicsLayoutWidget()
@@ -208,6 +226,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.progressbar = mainexp_widgets.CustomProgressBar()
         self.progressbar.labels = ['Load Plate', 'Check Laser Position', 'Autofocus', 'Image Check', 'Confocal Scan', 'Check Land Areas', 'Image Analysis']
 
+        self.btn_task_analyze.clicked.connect(self.task_analyze)
         self.btn_task_yes.clicked.connect(self.task_forward)
         self.btn_task_no.clicked.connect(self.task_backward) # todo
 
@@ -480,6 +499,22 @@ class MainWindow(QtWidgets.QMainWindow):
             self.confocal_vLine.setPos(mousePoint.x())
             self.confocal_hLine.setPos(mousePoint.y())
 
+    def confocal_load(self):
+        documents_path = os.path.expanduser(os.path.join('~', 'Documents', 'data_mat'))
+        fd = QtWidgets.QFileDialog(directory=documents_path)
+        targetfile = fd.getOpenFileName(filter='mat files (*.mat)')
+        targetfile = targetfile[0]
+
+        if targetfile != '':
+            matfile = scipy.io.loadmat(targetfile)
+
+            self.confocal_pl = matfile['pl']
+            self.confocal_rngx = np.squeeze(matfile['xvals'])
+            self.confocal_rngy = np.squeeze(matfile['yvals'])
+
+            self.plt_confocal.setTitle(targetfile)
+            self.confocal_initplot()
+
     def camera_updateplot(self):
         with warnings.catch_warnings():
             warnings.simplefilter('ignore', RuntimeWarning)  # for ignoring warnings when plotting NaNs
@@ -607,6 +642,38 @@ class MainWindow(QtWidgets.QMainWindow):
         else:
             self.plt_focus_score.setVisible(False)
             self.plt_liveapd.setVisible(True)
+
+    def task_analyze(self):
+        data = {'pl': np.squeeze(self.confocal_pl),
+                'xvals': np.squeeze(self.confocal_rngx),
+                'yvals': np.squeeze(self.confocal_rngy)}
+
+        best_angle = akl_image_processing.find_stripe_angle(data)
+        params = akl_image_processing.search_stripe_pattern(data, best_angle)
+        print(best_angle)
+        print(params)
+
+        masks = akl_image_processing.generate_stripe_mask(data, *params, best_angle)
+
+        start_x = data['xvals'][0]
+        stop_x = data['xvals'][-1]
+        start_y = data['yvals'][0]
+        stop_y = data['yvals'][-1]
+
+        px = (stop_x - start_x) / (len(data['xvals']) - 1)
+        py = (stop_y - start_y) / (len(data['yvals']) - 1)
+
+        for i in range(5):
+            mask = masks[i]
+            qtimg = getattr(self, f'qtimg_mask_{i}')
+            setattr(self, f'mask_{i}', mask)
+            qtimg.setImage(mask)
+            qtimg.resetTransform()
+            qtimg.setRect(start_x-px/2, start_y-py/2, (stop_x - start_x)+px, (stop_y - start_y)+py)
+
+            if i in [0, 1, 4]:
+                iso = getattr(self, f'iso_mask_{i}')
+                iso.setData(mask)
 
     def task_forward(self):
         value = (self.progressbar.value + 1) % (len(self.progressbar.labels) + 1)
