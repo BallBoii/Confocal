@@ -330,6 +330,7 @@ class MainWindow(QtWidgets.QMainWindow):
         ymax = self.dbl_confocal_y_stop.value()
 
         return (xmin, xmax, ymin, ymax)
+    
     def confocal_settings_store(self):
         settings = self.confocal_get_settings()
 
