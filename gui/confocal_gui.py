@@ -86,7 +86,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.btn_confocal_live.toggled.connect(self.confocal_live)
         self.int_confocal_live_avg.valueChanged.connect(self.confocal_live_set_avg)
         self.btn_confocal_stop.clicked.connect(self.confocal_stop)
-        self.btn_confocal_save.clicked.connect(functools.partial(self.thread_confocal.save, ext=True))
+        self.btn_confocal_save.clicked.connect(lambda: self.thread_confocal.save(ext=True)) # todo: cleanup functools
         self.btn_confocal_pxsync.clicked.connect(self.confocal_pxsync)
         self.chkbx_confocal_autolevel.toggled.connect(self.confocal_set_autolevel)
         self.chkbx_confocal_loglevel.toggled.connect(self.confocal_loglevel)
@@ -102,7 +102,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.btn_tracker_mode.addButton(self.btn_tracker_mode_image, 1)
         self.btn_tracker_home.clicked.connect(self.tracker_home)
         self.btn_tracker_autofocus.clicked.connect(self.tracker_start)
-
 
         self.confocal_mode = 0
         self.confocal_rngx = []
@@ -364,16 +363,6 @@ class MainWindow(QtWidgets.QMainWindow):
         else:
             raise Exception('No ROI Selected')
 
-    def camera_start_roi(self):
-        print('TO IMPLEMENT: relative ROI')
-
-        roi = self.vb_camera.roi
-        if roi and roi.isVisible():
-            self.confocal_set_roi(roi)
-            self.confocal_start()
-        else:
-            raise Exception('No ROI Selected')
-
     def confocal_start_preset1(self):
         self.confocal_settings_store()
 
@@ -604,6 +593,16 @@ class MainWindow(QtWidgets.QMainWindow):
         self.hlw_camera.item.setLevels(0, 255)
         self.thread_camera.start()
 
+    def camera_start_roi(self):
+        print('TO IMPLEMENT: relative ROI')
+
+        roi = self.vb_camera.roi
+        if roi and roi.isVisible():
+            self.confocal_set_roi(roi)
+            self.confocal_start()
+        else:
+            raise Exception('No ROI Selected')
+        
     def tracker_drive(self):
         xpos = self.dbl_tracker_xpos.value()
         ypos = self.dbl_tracker_ypos.value()
