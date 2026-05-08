@@ -427,19 +427,19 @@ class Confocal(ExpThread.ExpThread):
 
         graph = self.mainexp.pixmap_confocal_graph
         fig = self.mainexp.pixmap_confocal_fig
-        filename = self.mainexp.label_filename.text()
         data_dict = {'pl': self.mainexp.confocal_pl,
                      'xvals': self.mainexp.confocal_rngx,
                      'yvals': self.mainexp.confocal_rngy,
-                     'zvals': self.mainexp.confocal_rngz,
-                     'cam_image': self.mainexp.qtimg_camera.image,
-                     'cam_fov': tuple(self.mainexp.inst_params['camera']['fov']),
-                     'mask_0': self.mainexp.mask_0,
-                     'mask_1': self.mainexp.mask_1,
-                     'mask_2': self.mainexp.mask_2,
-                     'mask_3': self.mainexp.mask_3,
-                     'mask_4': self.mainexp.mask_4,
+                     'zvals': self.mainexp.confocal_rngz
                      }
+
+        filename = self.mainexp.label_filename.text()
+
+        sample_name = self.mainexp.linein_sample_name.text()
+        sample_loc = self.mainexp.int_sample_loc.value()
+
+        if sample_name:
+            filename += f'_{sample_name[:8]}_{sample_loc:02d}'
 
         self.mainexp.save_data(filename, data_dict, graph=graph, fig=fig)
 

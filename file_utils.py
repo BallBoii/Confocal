@@ -33,6 +33,74 @@ def save_data(filename, data, graph=None, fig=None, sweep_params=None):
         dict2yaml(sweep_params, os.path.expanduser(os.path.join('~', 'Documents', 'data_mat', '%s.yaml' % filename)))
 
 
+def save_csv(filename, metrics, template_fields, mainexp=None):
+    """
+    Processes template fields, resolves values from metrics or PyQt widgets on
+    the mainexp instance, and writes the compiled rows to a CSV.
+
+    Parameters:
+    -----------
+    filename : str
+        The output path of the CSV file.
+    metrics : dict
+        A dictionary containing key-value pairs of calculated metrics.
+    template_fields : list of tuple
+        The cached (field_name, alt_field_name) tuples loaded at startup.
+    mainexp : QWidget/QMainWindow, optional
+        The instance of your main application (usually passed as 'self')
+        to retrieve widget and parameter values from.
+    """
+    processed_rows = []
+
+    for field_name, alt_field_name in template_fields:
+
+        # --- Rule 1: Decorators starting with '-' ---
+        if field_name.startswith('-'):
+            processed_rows.append([field_name, ""])
+            continue
+
+        resolved_value = None
+        found = False
+
+        # --- Rule 2: Check metrics dictionary first ---
+        if field_name in metrics:
+            resolved_value = metrics[field_name]
+            found = True
+
+        # --- Rule 3: Check widgets/variables on the mainexp instance ---
+        elif alt_field_name and mainexp is not None:
+            if hasattr(mainexp, alt_field_name):
+                var_obj = getattr(mainexp, alt_field_name)
+
+                # Dynamically extract values depending on widget type
+                if hasattr(var_obj, 'value') and callable(var_obj.value):
+                    resolved_value = var_obj.value()
+                    found = True
+                elif hasattr(var_obj, 'text') and callable(var_obj.text):
+                    resolved_value = var_obj.text()
+                    found = True
+                elif hasattr(var_obj, 'isChecked') and callable(var_obj.isChecked):
+                    resolved_value = var_obj.isChecked()
+                    found = True
+                elif not callable(var_obj):
+                    resolved_value = var_obj
+                    found = True
+
+        # --- Rule 4: Fallback to 'n/a' if not resolved ---
+        if not found or resolved_value is None:
+            resolved_value = "n/a"
+
+        processed_rows.append([field_name, resolved_value])
+
+    # --- Write final compiled rows to the CSV ---
+    try:
+        fullfilename = os.path.expanduser(os.path.join('~', 'Documents', 'data_mat', '%s.csv' % filename))
+        with open(fullfilename, mode='w', newline='', encoding='utf-8') as outfile:
+            writer = csv.writer(outfile)
+            writer.writerows(processed_rows)
+    except Exception as e:
+        print(f"Error writing to CSV: {e}")
+
 def savemat(path, data):
     scipy.io.savemat(path, mdict=data)
 

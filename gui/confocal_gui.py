@@ -10,7 +10,7 @@ import pyqtgraph as pg
 import numpy as np
 
 # user-defined imports
-import file_utils
+import file_utils, csv
 import experiments as exp
 from instruments import ThorlabsPiezo
 import nidaqmx
@@ -86,7 +86,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.btn_confocal_live.toggled.connect(self.confocal_live)
         self.int_confocal_live_avg.valueChanged.connect(self.confocal_live_set_avg)
         self.btn_confocal_stop.clicked.connect(self.confocal_stop)
-        self.btn_confocal_save.clicked.connect(lambda: self.thread_confocal.save(ext=True)) # todo: cleanup functools
+        self.btn_confocal_save.clicked.connect(self.confocal_save_data) # todo: cleanup functools
         self.btn_confocal_pxsync.clicked.connect(self.confocal_pxsync)
         self.chkbx_confocal_autolevel.toggled.connect(self.confocal_set_autolevel)
         self.chkbx_confocal_loglevel.toggled.connect(self.confocal_loglevel)
@@ -269,6 +269,26 @@ class MainWindow(QtWidgets.QMainWindow):
             warnings.warn('loading guisettings.config from exp_code. this may be bogus')
             gui_settings = file_utils.load_config(os.path.join(os.getcwd(), 'guisettings.config'))
             self.import_gui_settings(gui_settings)
+
+        '''DATA TEMPLATE'''
+        csv_path = os.path.expanduser(os.path.join('~', 'Documents', 'exp_config', 'data_template.csv'))
+
+        self.metrics = {}
+        self.template_fields = []
+
+        if not os.path.exists(csv_path):
+            print(f"Error: Template file '{csv_path}' not found.")
+        else:
+            # 'utf-8-sig' safely handles Excel-exported CSV files with BOMs
+            with open(csv_path, mode='r', newline='', encoding='utf-8-sig') as infile:
+                reader = csv.reader(infile)
+                for row in reader:
+                    # Extract column values safely
+                    field_name = row[0].strip()
+                    alt_field_name = row[1].strip() if len(row) > 1 else ""
+
+                    # Store as a tuple to preserve the exact order
+                    self.template_fields.append((field_name, alt_field_name))
 
         '''MISCELLANEOUS'''
         self.current_wavenum = None
@@ -689,9 +709,8 @@ class MainWindow(QtWidgets.QMainWindow):
         best_angle = akl_image_processing.find_stripe_angle(data)
         params = akl_image_processing.search_stripe_pattern(data, best_angle)
 
-        masks = akl_image_processing.generate_stripe_mask(data, best_angle, *params)
-
-        print(best_angle, *params)
+        width_offset = self.dbl_task_analyze_offset.value()
+        masks = akl_image_processing.generate_stripe_mask(data, best_angle, *params, width_offset)
 
         start_x = data['xvals'][0]
         stop_x = data['xvals'][-1]
@@ -714,6 +733,14 @@ class MainWindow(QtWidgets.QMainWindow):
                 iso.setData(mask)
 
         metrics = akl_image_processing.analyze_image(data, masks)
+        metrics['Plate Rotation (deg)'] = best_angle
+        metrics['Period (um)'] = params[0]
+        metrics['Land Width (um)'] = params[1]
+        metrics['Starting Phase (um)'] = params[2]
+        metrics['Groove Width (um)'] = params[0] - params[1]
+        metrics['Width Offset (um)'] = width_offset
+
+        self.metrics = metrics
 
     def task_set_automate(self, checked):
         self.set_gui_btn_enable('all', not checked)
@@ -814,6 +841,40 @@ class MainWindow(QtWidgets.QMainWindow):
 
         if self.current_wavenum == self.next_wavenum:
             self.next_wavenum += 1
+
+    def confocal_save_data(self):
+        self.confocal_grab_screenshots()
+
+
+        camera_image = self.qtimg_camera.image
+        if camera_image is None:
+            camera_image = np.array([])
+
+        graph = self.pixmap_confocal_graph
+        fig = self.pixmap_confocal_fig
+        data_dict = {'pl': self.confocal_pl,
+                     'xvals': self.confocal_rngx,
+                     'yvals': self.confocal_rngy,
+                     'zvals': self.confocal_rngz,
+                     'cam_image': camera_image,
+                     'cam_fov': tuple(self.inst_params['camera']['fov']),
+                     'mask_0': self.mask_0,
+                     'mask_1': self.mask_1,
+                     'mask_2': self.mask_2,
+                     'mask_3': self.mask_3,
+                     'mask_4': self.mask_4,
+                     }
+
+        filename = self.label_filename.text()
+
+        sample_name = self.linein_sample_name.text()
+        sample_loc = self.int_sample_loc.value()
+
+        if sample_name:
+            filename += f'_{sample_name[:8]}_{sample_loc:02d}'
+
+        self.save_data(filename, data_dict, graph=graph, fig=fig)
+        file_utils.save_csv(filename, self.metrics, self.template_fields, self)
 
     def set_gui_defaults(self):
         self.set_gui_btn_enable('all', True)

@@ -3,8 +3,6 @@ import matplotlib.pyplot as plt
 from scipy.ndimage import rotate
 import pprint
 
-WIDTH_OFFSET = 10  # microns
-
 # SEARCH PARAMETERS
 ANGLE = 0
 ANGLE_RNG = 45
@@ -196,7 +194,7 @@ def search_stripe_pattern(data, best_angle, display=False):
 
     return params
 
-def generate_stripe_mask(data, theta_deg, period, width_bright, phase_offset, display=False):
+def generate_stripe_mask(data, theta_deg, period, width_bright, phase_offset, width_offset=0, display=False):
     """
     Generates a set of 5 binary masks representing different spatial zones of the
     periodic stripe pattern relative to the fitted 'land' area.
@@ -233,13 +231,13 @@ def generate_stripe_mask(data, theta_deg, period, width_bright, phase_offset, di
     mask = ((X_prime - phase_offset) % period < width_bright)
 
     # #1 - inside land
-    effective_width = width_bright + 2 * -WIDTH_OFFSET
-    effective_phase = phase_offset - (2 * -WIDTH_OFFSET / 2.0)
+    effective_width = width_bright + 2 * -width_offset
+    effective_phase = phase_offset - (2 * -width_offset / 2.0)
     mask1 = ((X_prime - effective_phase) % period <= effective_width)
 
     # #4 - outside land
-    effective_width = width_bright + 2 * WIDTH_OFFSET
-    effective_phase = phase_offset - (2 * WIDTH_OFFSET / 2.0)
+    effective_width = width_bright + 2 * width_offset
+    effective_phase = phase_offset - (2 * width_offset / 2.0)
     mask4 = ((X_prime - effective_phase) % period >= effective_width)
 
     # #2 - edge inner
@@ -266,7 +264,7 @@ def generate_stripe_mask(data, theta_deg, period, width_bright, phase_offset, di
                       extent=[xvals.min(), xvals.max(), yvals.min(), yvals.max()])
         ax[0].contour(mask4.astype(int).T, levels=[0.5], colors='blue', linewidths=1.0,
                       extent=[xvals.min(), xvals.max(), yvals.min(), yvals.max()])
-        ax[0].set_title(f"Fit Overlay (Offset: {WIDTH_OFFSET})")
+        ax[0].set_title(f"Fit Overlay (Offset: {width_offset})")
         ax[0].set_xlabel("x")
         ax[0].set_ylabel("y")
 
@@ -288,8 +286,8 @@ def analyze_image(data, masks):
 
     metrics = {}
     metrics['total pixels'] = pl.size
-    metrics['mean (cps)'] = np.mean(pl)
-    metrics['stdev (cps)'] = np.std(pl)
+    metrics['total mean (cps)'] = np.mean(pl)
+    metrics['total stdev (cps)'] = np.std(pl)
 
     for i in [1, 2, 3, 4]:
         area_pixels = np.count_nonzero(masks[i])
@@ -304,5 +302,5 @@ def analyze_image(data, masks):
             metrics[f'area {i} mean (cps)'] = 0.0
             metrics[f'area {i} stdev (cps)'] = 0.0
 
-    pprint.pprint(metrics)
+    # pprint.pprint(metrics)
     return metrics

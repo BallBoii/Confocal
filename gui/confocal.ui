@@ -1040,7 +1040,7 @@
      <property name="geometry">
       <rect>
        <x>600</x>
-       <y>715</y>
+       <y>710</y>
        <width>100</width>
        <height>50</height>
       </rect>
@@ -1360,7 +1360,7 @@
      <property name="geometry">
       <rect>
        <x>480</x>
-       <y>650</y>
+       <y>710</y>
        <width>100</width>
        <height>50</height>
       </rect>
@@ -1389,9 +1389,9 @@
      <property name="geometry">
       <rect>
        <x>480</x>
-       <y>720</y>
+       <y>780</y>
        <width>100</width>
-       <height>111</height>
+       <height>51</height>
       </rect>
      </property>
      <property name="text">
@@ -1399,6 +1399,41 @@
      </property>
      <property name="checkable">
       <bool>true</bool>
+     </property>
+    </widget>
+    <widget class="QDoubleSpinBox" name="dbl_task_analyze_offset">
+     <property name="geometry">
+      <rect>
+       <x>479</x>
+       <y>680</y>
+       <width>101</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="keyboardTracking">
+      <bool>false</bool>
+     </property>
+     <property name="decimals">
+      <number>1</number>
+     </property>
+     <property name="value">
+      <double>5.000000000000000</double>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_task_analyze_offset">
+     <property name="geometry">
+      <rect>
+       <x>480</x>
+       <y>660</y>
+       <width>101</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Edge Offset (um)</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
      </property>
     </widget>
     <zorder>cbox_camera_list</zorder>
@@ -1421,6 +1456,8 @@
     <zorder>btn_task_analyze</zorder>
     <zorder>chkbx_camera_loglevel</zorder>
     <zorder>btn_task_automate</zorder>
+    <zorder>dbl_task_analyze_offset</zorder>
+    <zorder>label_task_analyze_offset</zorder>
    </widget>
    <widget class="QFrame" name="frame_navigator">
     <property name="geometry">
@@ -1523,6 +1560,7 @@
   <tabstop>btn_task_forward</tabstop>
   <tabstop>btn_task_backward</tabstop>
   <tabstop>btn_task_reset</tabstop>
+  <tabstop>dbl_task_analyze_offset</tabstop>
   <tabstop>btn_task_analyze</tabstop>
   <tabstop>btn_task_automate</tabstop>
  </tabstops>
