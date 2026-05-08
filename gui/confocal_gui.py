@@ -793,8 +793,9 @@ class MainWindow(QtWidgets.QMainWindow):
         elif value == 5:
             # Check Land Areas and Perform Analysis
             self.task_analyze()
-            self.statusBar().showMessage('Check land areas for analysis.')
+            self.statusBar().showMessage('Check land areas for analysis. Adjust offset and press ANALYZE again if necessary. Press BACK to rescan.')
         elif value == 6:
+            self.confocal_save_data()
             self.statusBar().showMessage('Analysis completed. Press CONTINUE to scan another area. Press PLATE RESET to scan a new plate.')
 
     def task_forward(self):
@@ -844,7 +845,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def confocal_save_data(self):
         self.confocal_grab_screenshots()
-
 
         camera_image = self.qtimg_camera.image
         if camera_image is None:
