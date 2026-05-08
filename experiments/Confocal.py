@@ -406,11 +406,16 @@ class Confocal(ExpThread.ExpThread):
             self.save()
             self.mainexp.datasaved = True
 
+        self.signal_tracker_home.emit()
+
+        if self.mainexp.btn_task_automate.isChecked():
+            self.mainexp.illum_set('laser', False)
+            self.mainexp.illum_set('led', True)
+
         self.mainexp.confocal_scanLine.hide()
         self.mainexp.set_gui_btn_enable('all', True)
         self.mainexp.set_gui_input_enable('confocal', True)
         self.mainexp.btn_confocal_stop.setEnabled(False)
-        self.signal_tracker_home.emit()
 
     def save(self, ext=False):
         if self.isRunning() and not ext:

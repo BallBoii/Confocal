@@ -305,3 +305,4 @@ def analyze_image(data, masks):
             metrics[f'area {i} stdev (cps)'] = 0.0
 
     pprint.pprint(metrics)
+    return metrics

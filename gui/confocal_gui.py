@@ -224,17 +224,17 @@ class MainWindow(QtWidgets.QMainWindow):
         self.illum_set('led', False)
 
         '''NAVIGATION PROGRESS BAR'''
-        self.progressbar = mainexp_widgets.CustomProgressBar()
-        self.progressbar.labels = ['Load Plate', 'Check Laser Position', 'Autofocus', 'Image Check', 'Confocal Scan', 'Check Land Areas', 'Image Analysis']
+        self.task_progressbar = mainexp_widgets.CustomProgressBar()
+        self.task_progressbar.labels = ['Load Plate', 'Check Laser Position', 'Autofocus', 'Image Check', 'Confocal Scan', 'Image Analysis']
 
         self.btn_task_analyze.clicked.connect(self.task_analyze)
-        self.btn_task_yes.clicked.connect(self.task_forward)
-        self.btn_task_no.clicked.connect(self.task_backward)
+        self.btn_task_forward.clicked.connect(self.task_forward)
+        self.btn_task_backward.clicked.connect(self.task_backward)
         self.btn_task_reset.clicked.connect(self.task_reset)
         self.btn_task_automate.clicked.connect(self.task_set_automate)
         self.set_gui_btn_enable('automation', False)
 
-        self.layout_navigator.addWidget(self.progressbar)
+        self.layout_navigator.addWidget(self.task_progressbar)
 
         '''SET UP ALL GUI'''
         # Set up ranges and step limits in the gui fields
@@ -711,21 +711,27 @@ class MainWindow(QtWidgets.QMainWindow):
                 iso = getattr(self, f'iso_mask_{i}')
                 iso.setData(mask)
 
-        akl_image_processing.analyze_image(data, masks)
+        metrics = akl_image_processing.analyze_image(data, masks)
 
     def task_set_automate(self, checked):
         self.set_gui_btn_enable('all', not checked)
         self.set_gui_btn_enable('automation', checked)
         if checked:
             self.task_reset()
+        else:
+            self.statusBar().clearMessage()
 
     def task_reset(self):
-        self.progressbar.value = 0
+        self.task_progressbar.value = 0
         self.int_sample_loc.setValue(0)
+        self.linein_sample_comment.setText('')
         self.task_action()
+        self.statusBar().showMessage('Load plate and adjust Wyko stage to the desired position.')
+        self.linein_sample_name.setFocus()
+        self.linein_sample_name.selectAll()
 
     def task_action(self):
-        value = self.progressbar.value
+        value = self.task_progressbar.value
         if value == 0:
             self.int_sample_loc.setValue(self.int_sample_loc.value() + 1)
             # Load Plate
@@ -733,45 +739,45 @@ class MainWindow(QtWidgets.QMainWindow):
             self.illum_set('laser', False)
             self.illum_set('led', True)
             self.piezo.SetPosition(225.0)
+            self.statusBar().showMessage('Adjust Wyko stage to the desired position.')
         elif value == 1:
             # Check Laser Position
             self.illum_set('laser', True)
             self.illum_set('led', True)
             self.piezo.SetPosition(225.0)
+            self.statusBar().showMessage('Adjust laser position to land center.')
         elif value == 2:
             # Autofocus
             self.tracker_start()
+            self.statusBar().showMessage('Check Autofocus.')
         elif value == 3:
             # Image Check
             self.illum_set('laser', False)
             self.illum_set('led', True)
+            self.statusBar().showMessage('Check Autofocus.')
         elif value == 4:
             # Confocal Scan
             self.illum_set('laser', True)
             self.illum_set('led', False)
             self.confocal_start()
-            # todo: set illum automatically
+            self.statusBar().showMessage('Performing Confocal Scan.')
         elif value == 5:
-            # Check Land Areas
-            self.illum_set('laser', False)
-            self.illum_set('led', True)
-            print('Check Land Areas')
+            # Check Land Areas and Perform Analysis
+            self.task_analyze()
+            self.statusBar().showMessage('Check land areas for analysis.')
         elif value == 6:
-            # Image Analysis
-            print('Image Analysis')
-        elif value == 7:
-            print('Image Analysis Done')
+            self.statusBar().showMessage('Analysis completed. Press CONTINUE to scan another area. Press PLATE RESET to scan a new plate.')
 
     def task_forward(self):
-        self.progressbar.value = (self.progressbar.value + 1) % (len(self.progressbar.labels) + 1)
+        self.task_progressbar.value = (self.task_progressbar.value + 1) % (len(self.task_progressbar.labels) + 1)
         self.task_action()
 
     def task_backward(self):
-        value = self.progressbar.value
+        value = self.task_progressbar.value
         if value in [2, 3, 4]:
-            self.progressbar.value = 1
+            self.task_progressbar.value = 1
         else:
-            self.progressbar.value = 0
+            self.task_progressbar.value = 0
         self.task_action()
 
     def import_gui_settings(self, data):
@@ -821,7 +827,7 @@ class MainWindow(QtWidgets.QMainWindow):
             'liveapd': [self.btn_liveapd_start, self.btn_liveapd_clear],
             'tracker': [self.btn_tracker_home, self.btn_tracker_autofocus],
             'analysis': [self.btn_task_analyze],
-            'automation': [self.btn_task_yes, self.btn_task_no, self.btn_task_reset]
+            'automation': [self.btn_task_forward, self.btn_task_backward, self.btn_task_reset]
         }
 
         # Iterate through the requested sections

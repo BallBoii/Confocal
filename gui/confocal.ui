@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1619</width>
-    <height>905</height>
+    <height>873</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -59,22 +59,25 @@
       <property name="geometry">
        <rect>
         <x>0</x>
-        <y>10</y>
-        <width>47</width>
-        <height>30</height>
+        <y>0</y>
+        <width>45</width>
+        <height>25</height>
        </rect>
       </property>
       <property name="text">
        <string>Sample:</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
       </property>
      </widget>
      <widget class="QLineEdit" name="linein_sample_name">
       <property name="geometry">
        <rect>
         <x>50</x>
-        <y>10</y>
-        <width>181</width>
-        <height>30</height>
+        <y>0</y>
+        <width>271</width>
+        <height>25</height>
        </rect>
       </property>
       <property name="text">
@@ -135,10 +138,10 @@
      <widget class="QLabel" name="label_sample_location">
       <property name="geometry">
        <rect>
-        <x>240</x>
-        <y>10</y>
+        <x>320</x>
+        <y>0</y>
         <width>51</width>
-        <height>30</height>
+        <height>25</height>
        </rect>
       </property>
       <property name="text">
@@ -151,10 +154,10 @@
      <widget class="QSpinBox" name="int_sample_loc">
       <property name="geometry">
        <rect>
-        <x>300</x>
-        <y>10</y>
-        <width>90</width>
-        <height>30</height>
+        <x>370</x>
+        <y>0</y>
+        <width>71</width>
+        <height>25</height>
        </rect>
       </property>
       <property name="focusPolicy">
@@ -171,6 +174,38 @@
       </property>
       <property name="value">
        <number>1</number>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_sample_comment">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>25</y>
+        <width>45</width>
+        <height>25</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Note:</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="linein_sample_comment">
+      <property name="geometry">
+       <rect>
+        <x>50</x>
+        <y>25</y>
+        <width>391</width>
+        <height>25</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+      <property name="placeholderText">
+       <string/>
       </property>
      </widget>
     </widget>
@@ -988,7 +1023,7 @@
       <bool>true</bool>
      </property>
     </widget>
-    <widget class="QPushButton" name="btn_task_yes">
+    <widget class="QPushButton" name="btn_task_forward">
      <property name="geometry">
       <rect>
        <x>600</x>
@@ -998,10 +1033,10 @@
       </rect>
      </property>
      <property name="text">
-      <string>Yes</string>
+      <string>CONTINUE</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="btn_task_no">
+    <widget class="QPushButton" name="btn_task_backward">
      <property name="geometry">
       <rect>
        <x>600</x>
@@ -1011,7 +1046,7 @@
       </rect>
      </property>
      <property name="text">
-      <string>No</string>
+      <string>BACK</string>
      </property>
     </widget>
     <widget class="QPushButton" name="btn_task_reset">
@@ -1024,7 +1059,7 @@
       </rect>
      </property>
      <property name="text">
-      <string>RESET</string>
+      <string>RESET PLATE</string>
      </property>
     </widget>
     <widget class="QGroupBox" name="gBox_ManualControl">
@@ -1243,7 +1278,7 @@
       <property name="geometry">
        <rect>
         <x>120</x>
-        <y>100</y>
+        <y>120</y>
         <width>71</width>
         <height>20</height>
        </rect>
@@ -1282,7 +1317,7 @@
       <property name="geometry">
        <rect>
         <x>120</x>
-        <y>130</y>
+        <y>150</y>
         <width>71</width>
         <height>20</height>
        </rect>
@@ -1373,8 +1408,8 @@
     <zorder>btn_camera_start</zorder>
     <zorder>btn_camera_start_roi</zorder>
     <zorder>btn_camera_select</zorder>
-    <zorder>btn_task_yes</zorder>
-    <zorder>btn_task_no</zorder>
+    <zorder>btn_task_forward</zorder>
+    <zorder>btn_task_backward</zorder>
     <zorder>btn_task_reset</zorder>
     <zorder>gBox_ManualControl</zorder>
     <zorder>gBox_AutoFocus</zorder>
@@ -1415,16 +1450,6 @@
     </widget>
    </widget>
   </widget>
-  <widget class="QMenuBar" name="menubar">
-   <property name="geometry">
-    <rect>
-     <x>0</x>
-     <y>0</y>
-     <width>1619</width>
-     <height>33</height>
-    </rect>
-   </property>
-  </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
  <customwidgets>
@@ -1436,6 +1461,9 @@
  </customwidgets>
  <tabstops>
   <tabstop>linein_sample_name</tabstop>
+  <tabstop>linein_sample_comment</tabstop>
+  <tabstop>int_sample_loc</tabstop>
+  <tabstop>btn_confocal_load</tabstop>
   <tabstop>btn_confocal_start</tabstop>
   <tabstop>btn_confocal_stop</tabstop>
   <tabstop>btn_confocal_live</tabstop>
@@ -1466,11 +1494,13 @@
   <tabstop>int_confocal_cmax</tabstop>
   <tabstop>int_confocal_cmin</tabstop>
   <tabstop>btn_confocal_select</tabstop>
+  <tabstop>chkbx_confocal_loglevel</tabstop>
   <tabstop>chkbx_confocal_autolevel</tabstop>
   <tabstop>cbox_camera_list</tabstop>
   <tabstop>btn_camera_start</tabstop>
   <tabstop>btn_camera_start_roi</tabstop>
   <tabstop>btn_camera_select</tabstop>
+  <tabstop>chkbx_camera_loglevel</tabstop>
   <tabstop>chkbx_camera_autolevel</tabstop>
   <tabstop>glw_liveapd</tabstop>
   <tabstop>dbl_liveapd_acqtime</tabstop>
@@ -1490,9 +1520,11 @@
   <tabstop>btn_tracker_autofocus</tabstop>
   <tabstop>btn_tracker_mode_pixel</tabstop>
   <tabstop>btn_tracker_mode_image</tabstop>
-  <tabstop>btn_task_yes</tabstop>
-  <tabstop>btn_task_no</tabstop>
+  <tabstop>btn_task_forward</tabstop>
+  <tabstop>btn_task_backward</tabstop>
   <tabstop>btn_task_reset</tabstop>
+  <tabstop>btn_task_analyze</tabstop>
+  <tabstop>btn_task_automate</tabstop>
  </tabstops>
  <resources/>
  <connections/>
