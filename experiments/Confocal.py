@@ -441,7 +441,7 @@ class Confocal(ExpThread.ExpThread):
                      'mask_4': self.mainexp.mask_4,
                      }
 
-        self.save_data(filename, data_dict, graph=graph, fig=fig)
+        self.mainexp.save_data(filename, data_dict, graph=graph, fig=fig)
 
     def run(self):
         self.cancel = False

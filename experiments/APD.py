@@ -57,18 +57,3 @@ class CountMonitor(ExpThread.ExpThread):
                     clk_task.co_channels[0].co_pulse_freq = 1 / acqtime
 
         self.mainexp.set_gui_btn_enable('all', True)
-
-    def save(self):
-        if self.isRunning():
-            self.signal_liveapd_grab_screenshots.emit()
-            self.wait_for_mainexp()
-        else:
-            self.mainexp.liveapd_grab_screenshots()
-
-        time.sleep(0.1)
-
-        graph = self.mainexp.pixmap_liveapd_graph
-        filename = 'PLtime_%d' % self.mainexp.wavenum
-        data_dict = {'pl': self.mainexp.liveapd_pl, 'xvals': self.mainexp.liveapd_t}
-
-        self.save_data(filename, data_dict, graph=graph, fig=graph)

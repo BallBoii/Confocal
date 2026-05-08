@@ -271,7 +271,8 @@ class MainWindow(QtWidgets.QMainWindow):
             self.import_gui_settings(gui_settings)
 
         '''MISCELLANEOUS'''
-        self.wavenum = file_utils.getwavenum() + 1
+        self.current_wavenum = None
+        self.next_wavenum = file_utils.getwavenum() + 1
 
         self.pixmap_confocal_graph = None
         self.pixmap_confocal_fig = None
@@ -320,6 +321,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.btn_camera_select.setChecked(False)
         self.confocal_cursor.hide()
 
+        self.current_wavenum = self.next_wavenum
         self.confocal_settings_store()
         self.thread_confocal.start()
 
@@ -461,7 +463,7 @@ class MainWindow(QtWidgets.QMainWindow):
                     self.qtimg_confocal.setImage(np.log10(self.confocal_pl[:, :, zindex] + 1))
                 # self.hlw_confocal.setImageItem(self.qtimg_confocal)
                 self.confocal_scanLine.setPos(self.confocal_rngy[sindex])
-                filename = 'IMG_%04d' % self.wavenum
+                filename = 'IMG_%04d' % self.current_wavenum
 
                 self.plt_confocal.setTitle('%s: Z = %.2f' % (filename, self.confocal_rngz[zindex]))
                 self.label_filename.setText(filename)
@@ -806,6 +808,12 @@ class MainWindow(QtWidgets.QMainWindow):
                 outdata['int'][attr] = getattr(self, attr).value()
 
         file_utils.save_config(outdata, path=os.path.expanduser(os.path.join('~', 'Documents', 'exp_config')))
+
+    def save_data(self, filename, data_dict, graph=None, fig=None, sweep_params=None):
+        file_utils.save_data(filename, data_dict, graph=graph, fig=fig, sweep_params=sweep_params)
+
+        if self.current_wavenum == self.next_wavenum:
+            self.next_wavenum += 1
 
     def set_gui_defaults(self):
         self.set_gui_btn_enable('all', True)

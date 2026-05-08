@@ -30,24 +30,6 @@ class ExpThread(QThread):
     def log_clear(self):
         self.signal_log_clear.emit()
 
-    def save_data(self, filename, data_dict, graph=None, fig=None, sweep_params=None):
-        wavenum = filename.split('_')[-1]
-        if wavenum.isdigit():
-            wavenum = int(wavenum)
-        else:
-            raise ValueError('filename is not compatible with the format dataname_#')
-
-        file_utils.save_data(filename, data_dict, graph=graph, fig=fig)
-
-        # Increment wavenum if it has not been incremented already
-        if self.mainexp.wavenum < wavenum:
-            raise Warning('wavenum is messed up!')
-        elif self.mainexp.wavenum == wavenum:
-            self.mainexp.wavenum += 1
-        else:
-            # self.mainexp.wavenum has already been incremented
-            pass
-
     # Emit a signal for the mainexp to unlock mutex, which should be the last thing mainexp get to execute.
     # This ensures the previous signals get executed
     def wait_for_mainexp(self):
