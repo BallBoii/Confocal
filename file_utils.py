@@ -26,9 +26,9 @@ def save_data(filename, data, graph=None, fig=None, sweep_params=None):
     if True:
         scipy.io.savemat(os.path.expanduser(os.path.join('~', 'Documents', 'data_mat', filename+'.mat')), mdict=data)
     if graph is not None:
-        graph.save(os.path.expanduser(os.path.join('~', 'Documents', 'graphs_mat', '%s.png' % filename)), 'png')
+        graph.save(os.path.expanduser(os.path.join('~', 'Documents', 'data_screenshots', '%s.png' % filename)), 'png')
     if fig is not None:
-        fig.save(os.path.expanduser(os.path.join('~', 'Documents', 'figs_mat', '%s.png' % filename)), 'png')
+        fig.save(os.path.expanduser(os.path.join('~', 'Documents', 'data_images', '%s.png' % filename)), 'png')
     if sweep_params is not None:
         dict2yaml(sweep_params, os.path.expanduser(os.path.join('~', 'Documents', 'data_mat', '%s.yaml' % filename)))
 
