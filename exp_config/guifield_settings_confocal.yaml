@@ -1,0 +1,87 @@
+dbl_confocal_x_start:
+  setDecimals: 2
+  setRange: [-500, 500]
+  setSingleStep: 0.1
+  setAccelerated: 1
+dbl_confocal_x_stop:
+  setDecimals: 2
+  setRange: [-500, 500]
+  setSingleStep: 0.1
+  setAccelerated: 1
+dbl_confocal_y_start:
+  setDecimals: 2
+  setRange: [-500, 500]
+  setSingleStep: 0.1
+  setAccelerated: 1
+dbl_confocal_y_stop:
+  setDecimals: 2
+  setRange: [-500, 500]
+  setSingleStep: 0.1
+  setAccelerated: 1
+dbl_confocal_z_start:
+  setDecimals: 2
+  setRange: [0, 450]
+  setSingleStep: 0.1
+dbl_confocal_z_stop:
+  setDecimals: 2
+  setRange: [0, 450]
+  setSingleStep: 0.1
+int_confocal_x_numdivs:
+  setRange: [0, 2000]
+  setSingleStep: 100
+int_confocal_y_numdivs:
+  setRange: [0, 2000]
+  setSingleStep: 100
+int_confocal_z_numdivs:
+  setRange: [0, 2000]
+  setSingleStep: 1
+int_confocal_cmin:
+  setRange: [0, 2000000]
+  setSingleStep: 5000
+int_confocal_cmax:
+  setRange: [0, 2000000]
+  setSingleStep: 5000
+dbl_confocal_preset1:
+  setRange: [0, 1000]
+  setSingleStep: 10
+  setAccelerated: 1
+dbl_confocal_preset2:
+  setRange: [0, 1000]
+  setSingleStep: 10
+  setAccelerated: 1
+dbl_confocal_acqtime:
+  setDecimals: 5
+  setRange: [0.00001, 0.2]
+  setSingleStep: 0.001
+int_confocal_live_avg:
+  setRange: [1, 50]
+  setSingleStep: 1
+dbl_tracker_xpos:
+  setDecimals: 3
+  setRange: [-200, 200]
+  setSingleStep: 0.01
+dbl_tracker_ypos:
+  setDecimals: 3
+  setRange: [-200, 200]
+  setSingleStep: 0.01
+dbl_tracker_zpos:
+  setDecimals: 3
+  setRange: [0, 450]
+  setSingleStep: 10
+dbl_tracker_acqtime:
+  setDecimals: 3
+  setRange: [0.001, 20]
+  setSingleStep: 0.1
+dbl_tracker_zrng:
+  setDecimals: 2
+  setRange: [0, 200]
+  setSingleStep: 5
+int_tracker_numdivs:
+  setRange: [0, 100]
+  setSingleStep: 4
+dbl_liveapd_acqtime:
+  setDecimals: 3
+  setRange: [0.001, 20]
+  setSingleStep: 0.1
+chkbx_autosave:
+  setChecked: True

@@ -1,0 +1,27 @@
+piezo:
+  sn: 44533394
+camera:
+  pixels: [3840, 2160]
+  fov: [231.7, 130.4]
+illum:
+  laser: Dev1/port0/line0
+  led: Dev1/port0/line1
+galvos:
+  ao: /Dev1/ao
+  aoX: /Dev1/ao1
+  aoY: /Dev1/ao0
+  #scaleX: -0.01088*1.0 # Portable Confocal 50X @ Mahidol 2025/05/13
+  #scaleY: -0.01024*1.0
+  #scaleX: -(1.098-0.963)/((1/80.6)*1000)*1 #2026-01-29 SEAGATE - Back-reflection
+  #scaleY: (-1.724+1.855)/((1/80.6)*1000)*1 #2026-01-29 SEAGATE - Back-reflection
+  scaleX: -(1.268-0.669)/((1/17.96)*1000)*1.0  
+  scaleY: (0.512-(-0.088))/((1/17.96)*1000)*1.0 
+  offsetX: 0.500 #2026-02-11 @ Seagate
+  offsetY: 1.750 #2026-02-11 @ Seagate
+ctrapd: # DAQmxCounterInput
+  dev: /Dev1/ctr2
+  addr_src: /Dev1/PFI0
+  addr_gate: /Dev1/PFI1
+ctrclk: # DAQmxCounterOutput
+  dev: /Dev1/ctr0
+  addr_out: /Dev1/PFI12

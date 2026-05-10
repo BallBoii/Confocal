@@ -1,0 +1,40 @@
+﻿Plate ID,linein_sample_name
+Location,int_sample_loc
+Comment,linein_sample_comment
+---Confocal Parameters---,
+xmin,dbl_confocal_x_start
+xmax,dbl_confocal_x_stop
+ymin,dbl_confocal_y_start
+ymax,dbl_confocal_y_stop
+Acquisition Time (s),dbl_confocal_acqtime
+---Physical Parameters---,
+Plate Rotation (deg),
+Land Width (um),
+Groove Width (um),
+Period (um),
+Starting Phase (um),
+Edge Offset (um),dbl_task_analyze_offset
+---Image Analysis---,
+total pixels,
+total mean (cps),
+total stdev (cps),
+---Area 1: Inner Land Area---,
+area 1 pixels,
+area 1 percent,
+area 1 mean (cps),
+area 1 stdev (cps),
+---Area 2: Outer Land Area (inside land)---,
+area 2 pixels,
+area 2 percent,
+area 2 mean (cps),
+area 2 stdev (cps),
+---Area 3: Shoulder Area (outside land)---,
+area 3 pixels,
+area 3 percent,
+area 3 mean (cps),
+area 3 stdev (cps),
+---Area 4: Groove Area (background)---,
+area 4 pixels,
+area 4 percent,
+area 4 mean (cps),
+area 4 stdev (cps),
