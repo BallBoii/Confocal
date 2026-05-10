@@ -5,7 +5,7 @@ from click import progressbar
 from cv2_enumerate_cameras import enumerate_cameras
 
 # system imports
-import sys, os, scipy.io, warnings, functools, time
+import sys, os, scipy.io, warnings, shutil, time
 import pyqtgraph as pg
 import numpy as np
 
@@ -977,9 +977,44 @@ class CameraThread(QThread):
 def processEvents():
     QtWidgets.QApplication.processEvents()
 
+def check_and_setup_folders():
+    # Base path: ~/Documents
+    documents_dir = os.path.expanduser(os.path.join('~', 'Documents'))
+
+    # 1. Check data folders
+    # Note: Using the exact names specified in file_utils ('data_screenshots', 'data_images')
+    # If you changed them to 'data_graphs' and 'data_figs' in file_utils.py, update the names below!
+    data_folders = ['data_mat', 'data_screenshots', 'data_images']
+
+    for folder in data_folders:
+        folder_path = os.path.join(documents_dir, folder)
+        if not os.path.exists(folder_path):
+            ans = input(
+                f"Data folder '{folder}' does not exist in {documents_dir}. Create it? (y/n): ").strip().lower()
+            if ans == 'y':
+                os.makedirs(folder_path)
+                print(f"Created folder: {folder_path}")
+            else:
+                print(f"Skipped creating: {folder_path}")
+    # 2. Check exp_config folder
+    exp_config_path = os.path.join(documents_dir, 'exp_config')
+    if not os.path.exists(exp_config_path):
+        ans = input(
+            f"Configuration folder 'exp_config' does not exist in {documents_dir}. Create and copy contents from project? (y/n): ").strip().lower()
+        if ans == 'y':
+            local_exp_config = os.path.join(os.getcwd(), 'exp_config')
+
+            if os.path.exists(local_exp_config):
+                shutil.copytree(local_exp_config, exp_config_path)
+                print(f"Created and copied configuration to: {exp_config_path}")
+            else:
+                print(f"Error: Local 'exp_config' folder not found in {os.getcwd()}. Cannot copy contents.")
+        else:
+            print(f"Skipped setting up: {exp_config_path}")
 
 def main():
     """Packaged main function that launches GUI"""
+    check_and_setup_folders()
 
     app = QtWidgets.QApplication(sys.argv)
     window = MainWindow()
