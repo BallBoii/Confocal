@@ -3,7 +3,7 @@
     "configurations": [
         {
             "name": "Run Confocal GUI",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/gui/confocal_gui.py",
             "cwd": "${workspaceFolder}",
