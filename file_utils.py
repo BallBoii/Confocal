@@ -113,7 +113,8 @@ def getwavenum():
     for f in filelist:
         if '.mat' in f:
             filename = f.split('.mat')[0]
-            numlist.extend([int(s) for s in filename.split('_') if s.isdigit()])
+            num = filename.split('_')[1]
+            numlist.append(int(num))
 
     if not numlist:
         return 0

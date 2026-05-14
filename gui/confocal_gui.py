@@ -765,15 +765,20 @@ class MainWindow(QtWidgets.QMainWindow):
             self.int_sample_loc.setValue(self.int_sample_loc.value() + 1)
             # Load Plate
             self.btn_camera_start.setChecked(True)
-            self.illum_set('laser', False)
-            self.illum_set('led', True)
+            # self.illum_set('laser', False)
+            # self.illum_set('led', True)
+            self.btn_illum_laser.setChecked(True)
+            self.btn_illum_led.setChecked(True)
             self.piezo.SetPosition(225.0)
             self.statusBar().showMessage('Adjust Wyko stage to the desired position.')
         elif value == 1:
             # Check Laser Position
-            self.illum_set('laser', True)
-            self.illum_set('led', True)
+            # self.illum_set('laser', True)
+            # self.illum_set('led', True)
+            self.btn_illum_laser.setChecked(True)
+            self.btn_illum_led.setChecked(True)
             self.piezo.SetPosition(225.0)
+            self.btn_camera_select.setEnabled(True)
             self.statusBar().showMessage('Adjust laser position to land center.')
         elif value == 2:
             # Autofocus
@@ -781,13 +786,17 @@ class MainWindow(QtWidgets.QMainWindow):
             self.statusBar().showMessage('Check Autofocus.')
         elif value == 3:
             # Image Check
-            self.illum_set('laser', False)
-            self.illum_set('led', True)
-            self.statusBar().showMessage('Check Autofocus.')
+            # self.illum_set('laser', False)
+            # self.illum_set('led', True)
+            self.btn_illum_laser.setChecked(False)
+            self.btn_illum_led.setChecked(True)
+            self.statusBar().showMessage('Verify White Light Image.')
         elif value == 4:
             # Confocal Scan
-            self.illum_set('laser', True)
-            self.illum_set('led', False)
+            # self.illum_set('laser', True)
+            # self.illum_set('led', False)
+            self.btn_illum_laser.setChecked(True)
+            self.btn_illum_led.setChecked(False)
             self.confocal_start()
             self.statusBar().showMessage('Performing Confocal Scan.')
         elif value == 5:
@@ -796,7 +805,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.statusBar().showMessage('Check land areas for analysis. Adjust offset and press ANALYZE again if necessary. Press BACK to rescan.')
         elif value == 6:
             self.confocal_save_data()
-            self.statusBar().showMessage('Analysis completed. Press CONTINUE to scan another area. Press PLATE RESET to scan a new plate.')
+            self.statusBar().showMessage('Analysis completed. File saved. Press CONTINUE to scan another area. Press PLATE RESET to scan a new plate.')
 
     def task_forward(self):
         self.task_progressbar.value = (self.task_progressbar.value + 1) % (len(self.task_progressbar.labels) + 1)
@@ -871,7 +880,7 @@ class MainWindow(QtWidgets.QMainWindow):
         sample_loc = self.int_sample_loc.value()
 
         if sample_name:
-            filename += f'_{sample_name[:8]}_{sample_loc:02d}'
+            filename += f'_{sample_name[:6]}_{sample_loc:02d}'
 
         self.save_data(filename, data_dict, graph=graph, fig=fig)
         file_utils.save_csv(filename, self.metrics, self.template_fields, self)
