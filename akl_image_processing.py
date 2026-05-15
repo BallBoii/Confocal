@@ -296,8 +296,8 @@ def analyze_image(data, masks):
 
         # Safely handle empty masks to avoid numpy NaN warnings
         if area_pixels > 0:
-            metrics[f'area {i} mean (cps)'] = np.mean(pl[masks[i]])
-            metrics[f'area {i} stdev (cps)'] = np.std(pl[masks[i]])
+            metrics[f'area {i} mean (cps)'] = np.mean(pl[masks[i]==1])
+            metrics[f'area {i} stdev (cps)'] = np.std(pl[masks[i]==1])
         else:
             metrics[f'area {i} mean (cps)'] = 0.0
             metrics[f'area {i} stdev (cps)'] = 0.0
