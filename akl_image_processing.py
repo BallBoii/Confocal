@@ -9,13 +9,13 @@ ANGLE_RNG = 45
 ANGLE_RES = 0.1
 PERIOD = 110
 PERIOD_RNG = 15
-PERIOD_RES = 0.2
+PERIOD_RES = 0.5
 WIDTH = 35
 WIDTH_RNG = 15
-WIDTH_RES = 1
+WIDTH_RES = 0.5
 PHASE = 0
 PHASE_RNG = 180
-PHASE_RES = 0.2
+PHASE_RES = 0.5
 
 def get_projection_variance(img, angle):
     # Rotate the image

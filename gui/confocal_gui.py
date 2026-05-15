@@ -87,7 +87,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.int_confocal_live_avg.valueChanged.connect(self.confocal_live_set_avg)
         self.btn_confocal_stop.clicked.connect(self.confocal_stop)
         self.btn_confocal_save.clicked.connect(self.confocal_save_data) # todo: cleanup functools
-        self.btn_confocal_pxsync.clicked.connect(self.confocal_pxsync)
+        self.btn_confocal_pxsync.toggled.connect(self.confocal_pxsync)
         self.chkbx_confocal_autolevel.toggled.connect(self.confocal_set_autolevel)
         self.chkbx_confocal_loglevel.toggled.connect(self.confocal_loglevel)
         self.btn_confocal_acqtime_inc.clicked.connect(self.confocal_acqtime_inc)
@@ -309,6 +309,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.chkbx_confocal_autolevel.setChecked(False)
         self.chkbx_camera_autolevel.setChecked(False)
+        self.btn_confocal_pxsync.setChecked(True)
 
     def illum_set(self, source, state):
         """Sets the digital output for the laser or LED."""
