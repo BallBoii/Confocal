@@ -547,19 +547,59 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def confocal_load(self):
         documents_path = os.path.expanduser(os.path.join('~', 'Documents', 'data_mat'))
-        fd = QtWidgets.QFileDialog(directory=documents_path)
-        targetfile = fd.getOpenFileName(filter='mat files (*.mat)')
-        targetfile = targetfile[0]
+        # Standard QFileDialog usage
+        targetfile, _ = QtWidgets.QFileDialog.getOpenFileName(
+            self, "Open Scan Data", documents_path, 'mat files (*.mat)'
+        )
 
-        if targetfile != '':
+        if targetfile:
+            # 1. Load the .mat file data
             matfile = scipy.io.loadmat(targetfile)
-
             self.confocal_pl = matfile['pl']
             self.confocal_rngx = np.squeeze(matfile['xvals'])
             self.confocal_rngy = np.squeeze(matfile['yvals'])
 
+            # 2. Construct the .csv path and check for existence
+            base_path, _ = os.path.splitext(targetfile)
+            csv_filepath = base_path + ".csv"
+
+            if os.path.exists(csv_filepath):
+                try:
+                    # Use utf-8-sig to handle potential Excel BOMs
+                    with open(csv_filepath, mode='r', newline='', encoding='utf-8-sig') as f:
+                        reader = csv.reader(f)
+                        for row in reader:
+                            if len(row) < 2:
+                                continue
+
+                            field_name = row[0].strip()
+                            value = row[1].strip()
+
+                            # 3. Handle 'Plate ID' -> self.linein_sample_name
+                            if field_name == 'Plate ID':
+                                if hasattr(self.linein_sample_name, 'setText'):
+                                    self.linein_sample_name.setText(value)  # Update QLineEdit
+                                else:
+                                    self.linein_sample_name = value  # Standard string fallback
+
+                            # 4. Handle 'Location' -> self.int_sample_loc
+                            elif field_name == 'Location':
+                                try:
+                                    loc_int = int(value)
+                                    if hasattr(self.int_sample_loc, 'setValue'):
+                                        self.int_sample_loc.setValue(loc_int)  # Update QSpinBox
+                                    else:
+                                        self.int_sample_loc = loc_int  # Standard int fallback
+                                except ValueError:
+                                    print(f"Warning: Invalid Location integer in CSV: {value}")
+                except Exception as e:
+                    print(f"Error reading metadata CSV: {e}")
+
             self.plt_confocal.setTitle(targetfile)
             self.confocal_initplot()
+            self.current_wavenum = self.next_wavenum
+            filename = 'IMG_%04d' % self.current_wavenum
+            self.label_filename.setText(filename)
 
     def camera_updateplot(self, image):
         xpos = self.dbl_tracker_xpos.value()
