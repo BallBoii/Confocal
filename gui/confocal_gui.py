@@ -799,7 +799,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.int_sample_loc.setValue(0)
         self.linein_sample_comment.setText('')
         self.task_action()
-        self.statusBar().showMessage('Load plate and adjust Wyko stage to the desired position.')
+        self.statusBar().showMessage('Load plate and adjust Wyko stage to the desired position. Press CONTINUE to turn on laser for fine positioning.')
         self.linein_sample_name.setFocus()
         self.linein_sample_name.selectAll()
 
@@ -807,12 +807,14 @@ class MainWindow(QtWidgets.QMainWindow):
         value = self.task_progressbar.value
         if value == 0:
             self.int_sample_loc.setValue(self.int_sample_loc.value() + 1)
+            self.int_sample_loc.setFocus()
+            self.int_sample_loc.selectAll()
             # Load Plate
             self.btn_camera_start.setChecked(True)
             self.btn_illum_laser.setChecked(False)
             self.btn_illum_led.setChecked(True)
             self.piezo.SetPosition(225.0)
-            self.statusBar().showMessage('Adjust Wyko stage to the desired position. Press CONTINUE to turn on laser for fine positioning.')
+            self.statusBar().showMessage('Adjust Wyko stage to the desired position. CONTINUE to turn on laser for fine positioning.')
         elif value == 1:
             # Check Laser Position
             # self.illum_set('laser', True)
@@ -821,28 +823,28 @@ class MainWindow(QtWidgets.QMainWindow):
             self.btn_illum_led.setChecked(True)
             self.piezo.SetPosition(225.0)
             self.btn_camera_select.setEnabled(True)
-            self.statusBar().showMessage('Adjust laser position to land center. Press CONTINUE for Autofocus')
+            self.statusBar().showMessage('Adjust laser position to land center. CONTINUE for Autofocus')
         elif value == 2:
             # Autofocus
             self.btn_illum_laser.setChecked(True)
             self.btn_illum_led.setChecked(False)
             self.statusBar().showMessage('Running Autofocus...')
             self.tracker_start()
-            self.statusBar().showMessage('Autofocus Completed. Press CONTINUE or redo Autofocus manually.')
+            self.statusBar().showMessage('Autofocus Completed. CONTINUE or redo Autofocus manually.')
         elif value == 3:
             # Image Check
             # self.illum_set('laser', False)
             # self.illum_set('led', True)
             self.btn_illum_laser.setChecked(False)
             self.btn_illum_led.setChecked(True)
-            self.statusBar().showMessage('Verify White Light Image. Press CONTINUE for Confocal Scan')
+            self.statusBar().showMessage('Verify White Light Image. CONTINUE for Confocal Scan')
         elif value == 4:
             # Confocal Scan
             # self.illum_set('laser', True)
             # self.illum_set('led', False)
             self.statusBar().showMessage('Performing Confocal Scan...')
             finished_task = lambda: (
-                self.statusBar().showMessage('Confocal Finished. Check image and press CONTINUE for Analysis'),
+                self.statusBar().showMessage('Confocal Finished. CONTINUE for Analysis'),
                 self.thread_confocal.finished.disconnect(finished_task)
             )
             self.thread_confocal.finished.connect(finished_task)
@@ -851,10 +853,10 @@ class MainWindow(QtWidgets.QMainWindow):
             # Check Land Areas and Perform Analysis
             self.statusBar().showMessage('Performing Analysis.')
             self.task_analyze()
-            self.statusBar().showMessage('Check land areas for analysis. Adjust offset and press ANALYZE again if necessary. Press BACK to rescan. Press CONTINUE to save data.')
+            self.statusBar().showMessage('Check land areas. Adjust offset and press ANALYZE again if necessary. CONTINUE to save data.')
         elif value == 6:
             self.confocal_save_data()
-            self.statusBar().showMessage('Analysis completed. File saved. Press CONTINUE to scan another area. Press PLATE RESET to scan a new plate.')
+            self.statusBar().showMessage('File saved. CONTINUE to scan another area. PLATE RESET to scan a new plate.')
 
     def task_forward(self):
         self.task_progressbar.value = (self.task_progressbar.value + 1) % (len(self.task_progressbar.labels) + 1)
@@ -966,7 +968,31 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.btn_task_automate.isChecked():
             for btn in groups['automation']:
                 btn.setEnabled(True)
+        # Apply color-coding dynamically based on the final enabled state
+        # Map each button directly to its target highlighted style
+        automation_styles = {
+            self.btn_task_forward: """
+                    QPushButton { background-color: #27ae60; color: white; font-weight: bold; border-radius: 6px; padding: 4px; }
+                    QPushButton:hover { background-color: #2ecc71; }
+                    QPushButton:pressed { background-color: #1e8449; }
+                """,
+            self.btn_task_backward: """
+                    QPushButton { background-color: #f1c40f; color: #2c3e50; font-weight: bold; border-radius: 6px; padding: 4px; }
+                    QPushButton:hover { background-color: #f4d03f; }
+                    QPushButton:pressed { background-color: #d4ac0d; }
+                """,
+            self.btn_task_reset: """
+                    QPushButton { background-color: #c0392b; color: white; font-weight: bold; border-radius: 6px; padding: 4px; }
+                    QPushButton:hover { background-color: #e74c3c; }
+                    QPushButton:pressed { background-color: #a93226; }
+                """
+        }
 
+        for btn, style_string in automation_styles.items():
+            if btn.isEnabled():
+                btn.setStyleSheet(style_string)
+            else:
+                btn.setStyleSheet("")  # Wipes style so Qt naturally greys it out when disabled
 
     def set_gui_input_enable(self, section, bool_set):
         # 1. Define the standard groups

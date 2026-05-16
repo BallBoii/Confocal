@@ -168,9 +168,8 @@ class CustomLUTItem(pg.HistogramLUTItem):
         self.update()
 
     def imageChanged(self, autoLevel=False, autoRange=False):
-        targetHistogramSize = 100
         if type(self.imageItem) is not list:
-            h = self.imageItem().getHistogram(targetHistogramSize=targetHistogramSize)
+            h = self.imageItem().getHistogram()
         else:
             mns = []
             mxs = []
