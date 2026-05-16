@@ -336,6 +336,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.dbl_confocal_z_stop.setEnabled(bool(b))
 
     def confocal_start(self):
+        self.btn_illum_laser.setChecked(True)
+        self.btn_illum_led.setChecked(False)
+
         if self.btn_confocal_select.isChecked():
             self.btn_confocal_select.setChecked(False)
         if self.btn_camera_select.isChecked():
@@ -806,12 +809,10 @@ class MainWindow(QtWidgets.QMainWindow):
             self.int_sample_loc.setValue(self.int_sample_loc.value() + 1)
             # Load Plate
             self.btn_camera_start.setChecked(True)
-            # self.illum_set('laser', False)
-            # self.illum_set('led', True)
-            self.btn_illum_laser.setChecked(True)
+            self.btn_illum_laser.setChecked(False)
             self.btn_illum_led.setChecked(True)
             self.piezo.SetPosition(225.0)
-            self.statusBar().showMessage('Adjust Wyko stage to the desired position.')
+            self.statusBar().showMessage('Adjust Wyko stage to the desired position. Press CONTINUE to turn on laser for fine positioning.')
         elif value == 1:
             # Check Laser Position
             # self.illum_set('laser', True)
@@ -820,30 +821,37 @@ class MainWindow(QtWidgets.QMainWindow):
             self.btn_illum_led.setChecked(True)
             self.piezo.SetPosition(225.0)
             self.btn_camera_select.setEnabled(True)
-            self.statusBar().showMessage('Adjust laser position to land center.')
+            self.statusBar().showMessage('Adjust laser position to land center. Press CONTINUE for Autofocus')
         elif value == 2:
             # Autofocus
+            self.btn_illum_laser.setChecked(True)
+            self.btn_illum_led.setChecked(False)
+            self.statusBar().showMessage('Running Autofocus...')
             self.tracker_start()
-            self.statusBar().showMessage('Check Autofocus.')
+            self.statusBar().showMessage('Autofocus Completed. Press CONTINUE or redo Autofocus manually.')
         elif value == 3:
             # Image Check
             # self.illum_set('laser', False)
             # self.illum_set('led', True)
             self.btn_illum_laser.setChecked(False)
             self.btn_illum_led.setChecked(True)
-            self.statusBar().showMessage('Verify White Light Image.')
+            self.statusBar().showMessage('Verify White Light Image. Press CONTINUE for Confocal Scan')
         elif value == 4:
             # Confocal Scan
             # self.illum_set('laser', True)
             # self.illum_set('led', False)
-            self.btn_illum_laser.setChecked(True)
-            self.btn_illum_led.setChecked(False)
+            self.statusBar().showMessage('Performing Confocal Scan...')
+            finished_task = lambda: (
+                self.statusBar().showMessage('Confocal Finished. Check image and press CONTINUE for Analysis'),
+                self.thread_confocal.finished.disconnect(finished_task)
+            )
+            self.thread_confocal.finished.connect(finished_task)
             self.confocal_start()
-            self.statusBar().showMessage('Performing Confocal Scan.')
         elif value == 5:
             # Check Land Areas and Perform Analysis
+            self.statusBar().showMessage('Performing Analysis.')
             self.task_analyze()
-            self.statusBar().showMessage('Check land areas for analysis. Adjust offset and press ANALYZE again if necessary. Press BACK to rescan.')
+            self.statusBar().showMessage('Check land areas for analysis. Adjust offset and press ANALYZE again if necessary. Press BACK to rescan. Press CONTINUE to save data.')
         elif value == 6:
             self.confocal_save_data()
             self.statusBar().showMessage('Analysis completed. File saved. Press CONTINUE to scan another area. Press PLATE RESET to scan a new plate.')

@@ -61,7 +61,6 @@ class Confocal(ExpThread.ExpThread):
         self.mainexp.set_gui_btn_enable('all', False)
         self.mainexp.set_gui_input_enable('confocal', False)
         self.mainexp.btn_confocal_stop.setEnabled(True)
-        self.mainexp.chkbx_confocal_autolevel.setChecked(True)
 
         if self.mainexp.vb_confocal.roi:
             self.mainexp.vb_confocal.roi.hide()
@@ -409,8 +408,8 @@ class Confocal(ExpThread.ExpThread):
         self.signal_tracker_home.emit()
 
         if self.mainexp.btn_task_automate.isChecked():
-            self.mainexp.illum_set('laser', False)
-            self.mainexp.illum_set('led', True)
+            self.mainexp.btn_illum_laser.setChecked(False)
+            self.mainexp.btn_illum_led.setChecked(True)
 
         self.mainexp.confocal_scanLine.hide()
         self.mainexp.set_gui_btn_enable('all', True)
