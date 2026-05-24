@@ -35,15 +35,10 @@ After `uv sync`, the project is fully set up. Use any editor — to run, just ex
 ## Running the Application
 
 ```bash
-# From project root — uv handles the venv automatically
-uv run python gui/confocal_gui.py
+uv run python run.py
 ```
 
-If the venv is already activated, the plain command works too:
-
-```bash
-PYTHONPATH=. python gui/confocal_gui.py
-```
+`run.py` is a 4-line bootstrap at the project root that prepends both `ROOT` and `ROOT/gui` to `sys.path` and then `runpy`-executes `gui/confocal_gui.py` as `__main__`. This is the canonical entrypoint — works cross-platform without setting `PYTHONPATH`.
 
 ## Architecture Overview
 

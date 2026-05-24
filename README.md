@@ -27,8 +27,10 @@ uv sync --extra windows
 ## Running
 
 ```bash
-uv run python gui/confocal_gui.py
+uv run python run.py
 ```
+
+`run.py` is a tiny bootstrap script at the project root that puts both the root and `gui/` on `sys.path` before launching `gui/confocal_gui.py`. Works the same on Windows, Linux, and macOS — no `PYTHONPATH` to set.
 
 ## OS Support at a Glance
 
