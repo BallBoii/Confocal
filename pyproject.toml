@@ -1,0 +1,27 @@
+[project]
+name = "quantum-microscopy"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "PyQt6",
+    "numpy",
+    "scipy",
+    "matplotlib",
+    "pyqtgraph",
+    "opencv-python",
+    "imutils",
+    "click",
+    "cv2-enumerate-cameras",
+    "pandas",
+    "pytz",
+    "PyYAML",
+    "nidaqmx",
+]
+
+[project.optional-dependencies]
+windows = [
+    "pythonnet",  # Thorlabs Kinesis piezo control via .NET/CLR (Windows only)
+]
+
+[tool.uv]
+package = false

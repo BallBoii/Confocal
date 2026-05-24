@@ -1,8 +1,9 @@
-
 *.pyc
 *.xml
 *.iml
-*.pyc
-*.pyc
-*.pyc
-*.pyc
+
+# Python
+__pycache__/
+
+# uv / virtualenv
+.venv/
